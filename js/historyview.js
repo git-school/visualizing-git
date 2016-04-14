@@ -350,6 +350,8 @@ define(['d3'], function () {
                     matchedCommit = this.getCommit(matchedCommit.parent)
                   } else if (amount === 2) {
                     matchedCommit = this.getCommit(matchedCommit.parent2)
+                  } else {
+                    matchedCommit = null
                   }
                 }
               }
