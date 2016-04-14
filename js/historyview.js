@@ -281,6 +281,15 @@ define(['d3'], function () {
                 ref = 'HEAD';
             }
 
+            var commitsThatStartWith = commitData
+              .filter(function(c) { return c.id.indexOf(ref) === 0})
+
+            if (commitsThatStartWith.length === 1) {
+              return commitsThatStartWith[0]
+            } else if (commitsThatStartWith.length > 1) {
+              throw new Error("Ref " + ref + " is ambiguous")
+            }
+
             for (var i = 0; i < commitData.length; i++) {
                 var commit = commitData[i];
                 if (commit === ref) {
