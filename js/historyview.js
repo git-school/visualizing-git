@@ -276,11 +276,15 @@ define(['d3'], function () {
                 headMatcher = /HEAD(\^+)/i.exec(ref),
                 matchedCommit = null;
 
+            var parts = /^([^\^\~]+)(.*)$/.exec(ref),
+                ref = parts[1],
+                modifier = parts[2];
+
             if (ref === 'initial') {
                 return this.initialCommit;
             }
 
-            if (headMatcher) {
+            if (ref.toLowerCase() === 'head') {
                 ref = 'HEAD';
             }
 
@@ -327,10 +331,28 @@ define(['d3'], function () {
                 }
             }
 
-            if (headMatcher && matchedCommit) {
-                for (var h = 0; h < headMatcher[1].length; h++) {
-                    matchedCommit = getCommit.call(this, matchedCommit.parent);
+            if (matchedCommit && modifier) {
+              while(modifier) {
+                var nextToken = modifier[0]
+                modifier = modifier.substr(1)
+
+                if (nextToken === '^') {
+                  var amountMatch = modifier.match(/^(\d+)(.*)$/),
+                      amount = 1;
+
+                  if (amountMatch) {
+                    var amount = ~~amountMatch[1]
+                  }
+
+                  if (amount === 0) {
+                    /* do nothing, refers to this commit */
+                  } else if (amount === 1) {
+                    matchedCommit = this.getCommit(matchedCommit.parent)
+                  } else if (amount === 2) {
+                    matchedCommit = this.getCommit(matchedCommit.parent2)
+                  }
                 }
+              }
             }
 
             return matchedCommit;
