@@ -269,8 +269,11 @@ define(['d3'], function () {
          * @return {Object} the commit datum object
          */
         getCommit: function getCommit(ref) {
+            // Optimization, doesn't seemt to break anything
+            if (!ref) return null;
+
             var commitData = this.commitData,
-                headMatcher = /HEAD(\^+)/.exec(ref),
+                headMatcher = /HEAD(\^+)/i.exec(ref),
                 matchedCommit = null;
 
             if (ref === 'initial') {
