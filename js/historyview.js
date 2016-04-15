@@ -494,7 +494,7 @@ define(['d3'], function () {
             this._renderMergePointers();
             this._renderIdLabels();
             this._resizeSvg();
-            this.checkout(this.currentBranch);
+            this.currentBranch && this.checkout(this.currentBranch);
         },
 
         _renderCircles: function () {
@@ -856,19 +856,23 @@ define(['d3'], function () {
 
             commit.message = message;
             if (!commit.parent) {
-                if (!this.currentBranch) {
-                    throw new Error('Not a good idea to make commits while in a detached HEAD state.');
-                }
-
-                commit.parent = this.getCommit(this.currentBranch).id;
+                commit.parent = this.getCommit('HEAD').id;
             }
 
             this.commitData.push(commit);
-            this.moveTag(this.currentBranch, commit.id);
+            if (this.currentBranch) {
+              this.moveTag(this.currentBranch, commit.id);
+            }
 
             this.renderCommits();
 
-            this.checkout(this.currentBranch);
+            if (this.currentBranch) {
+              console.log('branch', this.currentBranch)
+              this.checkout(this.currentBranch);
+            } else {
+              console.log('commit', commit.id)
+              this.checkout(commit.id)
+            }
             return this;
         },
 
@@ -928,6 +932,7 @@ define(['d3'], function () {
         },
 
         checkout: function (ref) {
+          console.log("checking out", ref)
             var commit = this.getCommit(ref);
 
             if (!commit) {
