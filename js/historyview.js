@@ -273,7 +273,6 @@ define(['d3'], function () {
             if (!ref) return null;
 
             var commitData = this.commitData,
-                headMatcher = /HEAD(\^+)/i.exec(ref),
                 matchedCommit = null;
 
             var parts = /^([^\^\~]+)(.*)$/.exec(ref),
