@@ -335,15 +335,14 @@ define(['d3'], function () {
               while(modifier) {
                 var nextToken = modifier[0]
                 modifier = modifier.substr(1)
+                var amountMatch = modifier.match(/^(\d+)(.*)$/),
+                    amount = 1;
+
+                if (amountMatch) {
+                  var amount = ~~amountMatch[1]
+                }
 
                 if (nextToken === '^') {
-                  var amountMatch = modifier.match(/^(\d+)(.*)$/),
-                      amount = 1;
-
-                  if (amountMatch) {
-                    var amount = ~~amountMatch[1]
-                  }
-
                   if (amount === 0) {
                     /* do nothing, refers to this commit */
                   } else if (amount === 1) {
@@ -352,6 +351,12 @@ define(['d3'], function () {
                     matchedCommit = this.getCommit(matchedCommit.parent2)
                   } else {
                     matchedCommit = null
+                  }
+                } else if (nextToken === '~') {
+                  for (var i = 0; i < amount; i++) {
+                    if (matchedCommit && matchedCommit.parent) {
+                      matchedCommit = this.getCommit(matchedCommit.parent)
+                    }
                   }
                 }
               }
