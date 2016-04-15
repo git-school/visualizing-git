@@ -941,7 +941,9 @@ define(['d3'], function () {
                 previousHead.classed('checked-out', false);
             }
 
-            this._setCurrentBranch(ref === commit.id ? null : ref);
+            var startsWithCommit = commit.id.indexOf(ref) === 0
+            var startsWithHead = ref.toLowerCase().indexOf('head') === 0
+            this._setCurrentBranch(startsWithCommit || startsWithHead ? null : ref);
             this.moveTag('HEAD', commit.id);
             this.renderTags();
 
