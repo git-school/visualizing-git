@@ -143,6 +143,18 @@ define(['d3'], function () {
             this._scrollToBottom();
         },
 
+        transact: function (action, after) {
+          var oldCommit = this.historyView.getCommit('HEAD')
+          var oldBranch = this.historyView.currentBranch
+          var oldRef = oldBranch || oldCommit
+          action.call(this)
+          var newCommit = this.historyView.getCommit('HEAD')
+          var newBranch = this.historyView.currentBranch
+          var newRef = newBranch || newCommit.id
+          after.call(this, {commit: oldCommit, branch: oldBranch, ref: oldRef},
+                {commit: newCommit, branch: newBranch, ref: newRef})
+        },
+
         commit: function (args) {
             if (args.length >= 2) {
                 var arg = args.shift();
