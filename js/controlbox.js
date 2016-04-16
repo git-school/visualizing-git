@@ -236,13 +236,14 @@ define(['d3'], function () {
                 default:
                     var remainingArgs = [arg].concat(args);
                     args.length = 0;
+                    var rest = remainingArgs.join(' ')
                     this.transact(function() {
-                      this.historyView.checkout(remainingArgs.join(' '));
+                      this.historyView.checkout(rest);
                     }, function(before, after) {
                       this.historyView.addReflogEntry(
                         'HEAD', after.commit.id,
                         'checkout: moving from ' + before.ref +
-                          ' to ' + after.ref
+                          ' to ' + rest
                       )
                     })
                 }
