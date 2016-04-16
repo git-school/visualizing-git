@@ -156,13 +156,15 @@ define(['d3'], function () {
         },
 
         commit: function (args) {
+          var msg = ""
+          this.transact(function() {
             if (args.length >= 2) {
                 var arg = args.shift();
 
                 switch (arg) {
                     case '-m':
-                        var message = args.join(" ");
-                        this.historyView.commit({},message);
+                        msg = args.join(" ");
+                        this.historyView.commit({},msg);
                         break;
                     default:
                         this.historyView.commit();
@@ -171,6 +173,17 @@ define(['d3'], function () {
             } else {
                 this.historyView.commit();
             }
+          }, function(before, after) {
+            var reflogMsg = 'commit: ' + msg
+            this.historyView.addReflogEntry(
+              'HEAD', after.commit.id, reflogMsg
+            )
+            if (before.branch) {
+              this.historyView.addReflogEntry(
+                before.branch, after.commit.id, reflogMsg
+              )
+            }
+          })
         },
 
         branch: function (args) {
