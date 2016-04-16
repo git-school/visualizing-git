@@ -269,16 +269,31 @@ define(['d3'], function () {
          * @return {Object} the commit datum object
          */
         getCommit: function getCommit(ref) {
+            // Optimization, doesn't seem to break anything
+            if (!ref) return null;
+
             var commitData = this.commitData,
-                headMatcher = /HEAD(\^+)/.exec(ref),
                 matchedCommit = null;
+
+            var parts = /^([^\^\~]+)(.*)$/.exec(ref),
+                ref = parts[1],
+                modifier = parts[2];
 
             if (ref === 'initial') {
                 return this.initialCommit;
             }
 
-            if (headMatcher) {
+            if (ref.toLowerCase() === 'head') {
                 ref = 'HEAD';
+            }
+
+            var commitsThatStartWith = commitData
+              .filter(function(c) { return c.id.indexOf(ref) === 0})
+
+            if (commitsThatStartWith.length === 1) {
+              return commitsThatStartWith[0]
+            } else if (commitsThatStartWith.length > 1) {
+              throw new Error("Ref " + ref + " is ambiguous")
             }
 
             for (var i = 0; i < commitData.length; i++) {
@@ -293,14 +308,14 @@ define(['d3'], function () {
                     break;
                 }
 
-                var matchedTag = function() { 
+                var matchedTag = function() {
                     for (var j = 0; j < commit.tags.length; j++) {
                         var tag = commit.tags[j];
                         if (tag === ref) {
                             matchedCommit = commit;
                             return true;
                         }
-                        
+
                         if (tag.indexOf('[') === 0 && tag.indexOf(']') === tag.length - 1) {
                             tag = tag.substring(1, tag.length - 1);
                         }
@@ -315,10 +330,35 @@ define(['d3'], function () {
                 }
             }
 
-            if (headMatcher && matchedCommit) {
-                for (var h = 0; h < headMatcher[1].length; h++) {
-                    matchedCommit = getCommit.call(this, matchedCommit.parent);
+            if (matchedCommit && modifier) {
+              while(modifier) {
+                var nextToken = modifier[0]
+                modifier = modifier.substr(1)
+                var amountMatch = modifier.match(/^(\d+)(.*)$/),
+                    amount = 1;
+
+                if (amountMatch) {
+                  var amount = ~~amountMatch[1]
                 }
+
+                if (nextToken === '^') {
+                  if (amount === 0) {
+                    /* do nothing, refers to this commit */
+                  } else if (amount === 1) {
+                    matchedCommit = this.getCommit(matchedCommit.parent)
+                  } else if (amount === 2) {
+                    matchedCommit = this.getCommit(matchedCommit.parent2)
+                  } else {
+                    matchedCommit = null
+                  }
+                } else if (nextToken === '~') {
+                  for (var i = 0; i < amount; i++) {
+                    if (matchedCommit && matchedCommit.parent) {
+                      matchedCommit = this.getCommit(matchedCommit.parent)
+                    }
+                  }
+                }
+              }
             }
 
             return matchedCommit;
@@ -360,7 +400,7 @@ define(['d3'], function () {
             svgContainer = container.append('div')
                 .classed('svg-container', true)
                 .classed('remote-container', this.isRemote);
-                
+
             svg = svgContainer.append('svg:svg');
 
             svg.attr('id', this.name)
@@ -417,7 +457,7 @@ define(['d3'], function () {
                 preventOverlap(commit, this);
             }
         },
-        
+
         _resizeSvg: function() {
             var ele = document.getElementById(this.svg.node().id);
             var container = ele.parentNode;
@@ -453,7 +493,7 @@ define(['d3'], function () {
             this._renderMergePointers();
             this._renderIdLabels();
             this._resizeSvg();
-            this.checkout(this.currentBranch);
+            this.currentBranch && this.checkout(this.currentBranch);
         },
 
         _renderCircles: function () {
@@ -726,8 +766,8 @@ define(['d3'], function () {
             newTags.append('svg:text')
                 .text(function (d) {
                     if (d.name.indexOf('[') === 0 && d.name.indexOf(']') === d.name.length - 1)
-                        return d.name.substring(1, d.name.length - 1); 
-                    return d.name; 
+                        return d.name.substring(1, d.name.length - 1);
+                    return d.name;
                 })
                 .attr('y', function (d) {
                     return tagY(d, view) + 14;
@@ -815,19 +855,23 @@ define(['d3'], function () {
 
             commit.message = message;
             if (!commit.parent) {
-                if (!this.currentBranch) {
-                    throw new Error('Not a good idea to make commits while in a detached HEAD state.');
-                }
-
-                commit.parent = this.getCommit(this.currentBranch).id;
+                commit.parent = this.getCommit('HEAD').id;
             }
 
             this.commitData.push(commit);
-            this.moveTag(this.currentBranch, commit.id);
+            if (this.currentBranch) {
+              this.moveTag(this.currentBranch, commit.id);
+            }
 
             this.renderCommits();
 
-            this.checkout(this.currentBranch);
+            if (this.currentBranch) {
+              console.log('branch', this.currentBranch)
+              this.checkout(this.currentBranch);
+            } else {
+              console.log('commit', commit.id)
+              this.checkout(commit.id)
+            }
             return this;
         },
 
@@ -887,6 +931,7 @@ define(['d3'], function () {
         },
 
         checkout: function (ref) {
+          console.log("checking out", ref)
             var commit = this.getCommit(ref);
 
             if (!commit) {
@@ -900,7 +945,9 @@ define(['d3'], function () {
                 previousHead.classed('checked-out', false);
             }
 
-            this._setCurrentBranch(ref === commit.id ? null : ref);
+            var startsWithCommit = commit.id.indexOf(ref) === 0
+            var startsWithHead = ref.toLowerCase().indexOf('head') === 0
+            this._setCurrentBranch(startsWithCommit || startsWithHead ? null : ref);
             this.moveTag('HEAD', commit.id);
             this.renderTags();
 
@@ -969,9 +1016,9 @@ define(['d3'], function () {
                 while (branchStartCommit.parent !== currentCommit.id) {
                     branchStartCommit = this.getCommit(branchStartCommit.parent);
                 }
-                
+
                 branchStartCommit.isNoFFBranch = true;
-                
+
                 this.commit({parent2: mergeTarget.id, isNoFFCommit: true});
             } else if (this.isAncestor(currentCommit, mergeTarget)) {
                 this.fastForward(mergeTarget);

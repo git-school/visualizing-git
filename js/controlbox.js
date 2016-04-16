@@ -239,7 +239,7 @@ define(['d3'], function () {
 
                 return;
             }
-            
+
             while (args.length > 0) {
                 var arg = args.shift();
 
