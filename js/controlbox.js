@@ -146,7 +146,7 @@ define(['d3'], function () {
         transact: function (action, after) {
           var oldCommit = this.historyView.getCommit('HEAD')
           var oldBranch = this.historyView.currentBranch
-          var oldRef = oldBranch || oldCommit
+          var oldRef = oldBranch || oldCommit.id
           action.call(this)
           var newCommit = this.historyView.getCommit('HEAD')
           var newBranch = this.historyView.currentBranch
