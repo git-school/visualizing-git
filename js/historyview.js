@@ -250,6 +250,8 @@ define(['d3'], function () {
         this.isRemote = typeof config.remoteName === 'string';
         this.remoteName = config.remoteName;
 
+        this.logs = {}
+
         this.initialCommit = {
             id: 'initial',
             parent: null,
@@ -795,6 +797,14 @@ define(['d3'], function () {
             display.text(text);
         },
 
+        addReflogEntry: function (ref, destination, reason) {
+          this.logs[ref] = this.logs[ref] || []
+          this.logs[ref].unshift({
+            destination: destination,
+            reason: reason
+          })
+        },
+
         moveTag: function (tag, ref) {
             var currentLoc = this.getCommit(tag),
                 newLoc = this.getCommit(ref);
@@ -931,7 +941,6 @@ define(['d3'], function () {
         },
 
         checkout: function (ref) {
-          console.log("checking out", ref)
             var commit = this.getCommit(ref);
 
             if (!commit) {
