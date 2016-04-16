@@ -236,7 +236,15 @@ define(['d3'], function () {
                 default:
                     var remainingArgs = [arg].concat(args);
                     args.length = 0;
-                    this.historyView.checkout(remainingArgs.join(' '));
+                    this.transact(function() {
+                      this.historyView.checkout(remainingArgs.join(' '));
+                    }, function(before, after) {
+                      this.historyView.addReflogEntry(
+                        'HEAD', after.commit.id,
+                        'checkout: moving from ' + before.ref +
+                          ' to ' + after.ref
+                      )
+                    })
                 }
             }
         },
