@@ -950,7 +950,8 @@ define(['d3'], function () {
 
             if (this.isAncestorOf(commit, 'HEAD')) {
                 commit.reverted = true;
-                this.commit({reverts: commit.id});
+                this.commit({reverts: commit.id},
+                  "Revert " + commit.id);
             } else {
                 throw new Error(ref + 'is not an ancestor of HEAD.');
             }

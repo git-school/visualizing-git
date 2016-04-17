@@ -323,7 +323,24 @@ define(['d3'], function () {
         },
 
         revert: function (args) {
+          if (args.length === 0) {
+            this.error('You must specify a commit to revert');
+            return
+          }
+
+          this.transact(function() {
             this.historyView.revert(args.shift());
+          }, function(before, after) {
+            var reflogMsg = 'revert: ' + before.commit.message || before.commit.id
+            this.historyView.addReflogEntry(
+              'HEAD', after.commit.id, reflogMsg
+            )
+            if (before.branch) {
+              this.historyView.addReflogEntry(
+                before.branch, after.commit.id, reflogMsg
+              )
+            }
+          })
         },
 
         merge: function (args) {
