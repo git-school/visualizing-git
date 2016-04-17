@@ -895,14 +895,6 @@ define(['d3'], function() {
         }
       }
 
-      var ancestorsOfHead = refs.filter(function(ref) {
-        return this.isAncestorOf(ref, 'HEAD')
-      }, this)
-      console.log(ancestorsOfHead)
-
-      if (ancestorsOfHead.length) {
-        // TODO: handle situation when this might not be true, like if a change is reverted
-        throw new Error('cherry-picking ' + ancestorsOfHead[0] + ' would result in an empty commit since it is an ancestor of HEAD')
       }
     },
 
