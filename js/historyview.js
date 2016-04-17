@@ -867,6 +867,37 @@ define(['d3'], function() {
       return this;
     },
 
+    cherryPick: function(refs, mainline) {
+      if (mainline) {
+        var nonMergeRefs = refs.filter(function(ref) {
+          var commit = this.getCommit(ref)
+          return !commit.parent || !commit.parent2
+        }, this)
+
+        if (nonMergeRefs.length) {
+          throw new Error('mainline specified but ' + nonMergeRefs[0] + ' is not a merge')
+        }
+      } else {
+        var mergeRefs = refs.filter(function(ref) {
+          var commit = this.getCommit(ref)
+          return commit.parent && commit.parent2
+        }, this)
+
+        if (mergeRefs.length) {
+          throw new Error('cannot cherry-pick merge commit ' + mergeRefs[0] + ' without specifying a mainline with -m')
+        }
+      }
+
+      var ancestorsOfHead = refs.filter(function(ref) {
+        return this.isAncestorOf(ref, 'HEAD')
+      }, this)
+      console.log(ancestorsOfHead)
+
+      if (ancestorsOfHead.length) {
+        throw new Error('cherry-picking ' + ancestorsOfHead[0] + ' would result in an empty commit since it is an ancestor of HEAD')
+      }
+    },
+
     branch: function(name) {
       if (!name || name.trim() === '') {
         throw new Error('You need to give a branch name.');
