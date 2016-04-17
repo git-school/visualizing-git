@@ -895,6 +895,11 @@ define(['d3'], function() {
         }
       }
 
+      if (!mainline) {
+        refs.forEach(function(ref) {
+          var commit = this.getCommit(ref)
+          this.commit({}, commit.message)
+        }, this)
       }
     },
 
