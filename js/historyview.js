@@ -868,6 +868,13 @@ define(['d3'], function() {
     },
 
     cherryPick: function(refs, mainline) {
+      refs.forEach(function(ref) {
+        if (!this.getCommit(ref)) {
+          throw new Error("fatal: bad revision '" + ref + "'")
+          return
+        }
+      }, this)
+
       if (mainline) {
         var nonMergeRefs = refs.filter(function(ref) {
           var commit = this.getCommit(ref)
@@ -894,6 +901,7 @@ define(['d3'], function() {
       console.log(ancestorsOfHead)
 
       if (ancestorsOfHead.length) {
+        // TODO: handle situation when this might not be true, like if a change is reverted
         throw new Error('cherry-picking ' + ancestorsOfHead[0] + ' would result in an empty commit since it is an ancestor of HEAD')
       }
     },
