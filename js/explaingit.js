@@ -18,6 +18,7 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
 
     args.name = name;
     historyView = new HistoryView(args);
+    window.hv = historyView;
 
     if (args.originData) {
       originView = new HistoryView({
@@ -30,6 +31,7 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
       });
 
       originView.render(playground);
+      window.ov = originView;
     }
 
     controlBox = new ControlBox({
@@ -37,6 +39,7 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
       originView: originView,
       initialMessage: args.initialMessage
     });
+    window.cb = controlBox;
 
     controlBox.render(playground);
     historyView.render(playground);
