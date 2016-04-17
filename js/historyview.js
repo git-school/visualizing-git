@@ -271,6 +271,7 @@ define(['d3'], function () {
         getCommit: function getCommit(ref) {
             // Optimization, doesn't seem to break anything
             if (!ref) return null;
+            if (ref.id) return ref
 
             var commitData = this.commitData,
                 matchedCommit = null;
@@ -807,46 +808,6 @@ define(['d3'], function () {
             return this;
         },
 
-        /**
-         * @method isAncestor
-         * @param ref1
-         * @param ref2
-         * @return {Boolean} whether or not ref1 is an ancestor of ref2
-         */
-        isAncestor: function isAncestor(ref1, ref2) {
-            var currentCommit = this.getCommit(ref1),
-                targetTree = this.getCommit(ref2),
-                inTree = false,
-                additionalTrees = [];
-
-            if (!currentCommit) {
-                return false;
-            }
-
-            while (targetTree) {
-                if (targetTree.id === currentCommit.id) {
-                    inTree = true;
-                    targetTree = null;
-                } else {
-                    if (targetTree.parent2) {
-                        additionalTrees.push(targetTree.parent2);
-                    }
-                    targetTree = this.getCommit(targetTree.parent);
-                }
-            }
-
-            if (inTree) {
-                return true;
-            }
-
-            for (var i = 0; i < additionalTrees.length; i++) {
-                inTree = isAncestor.call(this, currentCommit, additionalTrees[i]);
-                if (inTree) break;
-            }
-
-            return inTree;
-        },
-
         commit: function (commit, message) {
             commit = commit || {};
 
@@ -866,10 +827,8 @@ define(['d3'], function () {
             this.renderCommits();
 
             if (this.currentBranch) {
-              console.log('branch', this.currentBranch)
               this.checkout(this.currentBranch);
             } else {
-              console.log('commit', commit.id)
               this.checkout(commit.id)
             }
             return this;
@@ -980,7 +939,7 @@ define(['d3'], function () {
                 throw new Error('Cannot find ref: ' + ref);
             }
 
-            if (this.isAncestor(commit, 'HEAD')) {
+            if (this.isAncestorOf(commit, 'HEAD')) {
                 commit.reverted = true;
                 this.commit({reverts: commit.id});
             } else {
@@ -999,17 +958,32 @@ define(['d3'], function () {
             }
         },
 
+        isAncestorOf: function(search, start) {
+          var startCommit = this.getCommit(start),
+              searchCommit = this.getCommit(search)
+
+          if (startCommit === searchCommit) {
+            return true
+          } else {
+            var ancestorOnFirstParent = startCommit.parent && this.isAncestorOf(searchCommit.id, startCommit.parent)
+            var ancestorOnSecondParent = startCommit.parent2 && this.isAncestorOf(searchCommit.id, startCommit.parent2)
+            return ancestorOnFirstParent || ancestorOnSecondParent
+          }
+        },
+
         merge: function (ref, noFF) {
             var mergeTarget = this.getCommit(ref),
                 currentCommit = this.getCommit('HEAD');
-
             if (!mergeTarget) {
                 throw new Error('Cannot find ref: ' + ref);
             }
 
+
             if (currentCommit.id === mergeTarget.id) {
                 throw new Error('Already up-to-date.');
             } else if (currentCommit.parent2 === mergeTarget.id) {
+                throw new Error('Already up-to-date.');
+            } else if (this.isAncestorOf(mergeTarget, currentCommit)) {
                 throw new Error('Already up-to-date.');
             } else if (noFF === true) {
                 var branchStartCommit = this.getCommit(mergeTarget.parent);
@@ -1020,7 +994,7 @@ define(['d3'], function () {
                 branchStartCommit.isNoFFBranch = true;
 
                 this.commit({parent2: mergeTarget.id, isNoFFCommit: true});
-            } else if (this.isAncestor(currentCommit, mergeTarget)) {
+            } else if (this.isAncestorOf(currentCommit.id, mergeTarget.id)) {
                 this.fastForward(mergeTarget);
                 return 'Fast-Forward';
             } else {
@@ -1047,7 +1021,7 @@ define(['d3'], function () {
                 throw new Error('Already up-to-date.');
             }
 
-            isCommonAncestor = this.isAncestor(currentCommit, rebaseTarget);
+            isCommonAncestor = this.isAncestorOf(currentCommit, rebaseTarget);
 
             if (isCommonAncestor) {
                 this.fastForward(rebaseTarget);
@@ -1059,7 +1033,7 @@ define(['d3'], function () {
             while (!isCommonAncestor) {
                 toRebase.unshift(currentCommit);
                 currentCommit = this.getCommit(currentCommit.parent);
-                isCommonAncestor = this.isAncestor(currentCommit, rebaseTarget);
+                isCommonAncestor = this.isAncestorOf(currentCommit, rebaseTarget);
             }
 
             for (var i = 0; i < toRebase.length; i++) {
