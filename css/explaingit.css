@@ -179,6 +179,9 @@ circle.commit {
   fill: #EEEEEE;
   stroke: #888888;
   stroke-width: 3;
+  transition-property: stroke, fill;
+  transition-duration: 500ms;
+  transition-timing-function: ease-out;
 }
 
 circle.commit.checked-out {
@@ -199,6 +202,11 @@ circle.commit.reverted {
 circle.commit.rebased {
   stroke: #3300CC;
   fill: #CCCCFF;
+}
+
+circle.commit.cherry-picked {
+  stroke: #FF0000;
+  fill: #FFEEEE;
 }
 
 circle.commit.branchless {

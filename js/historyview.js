@@ -10,7 +10,7 @@ define(['d3'], function() {
     cx, cy, fixCirclePosition,
     px1, py1, fixPointerStartPosition,
     px2, py2, fixPointerEndPosition,
-    fixIdPosition, tagY;
+    fixIdPosition, tagY, getUniqueSetItems;
 
   preventOverlap = function preventOverlap(commit, view) {
     var commitData = view.commitData,
@@ -217,6 +217,18 @@ define(['d3'], function() {
     } else {
       return commitCY + 50 + (tagIndex * 25);
     }
+  };
+
+  getUniqueSetItems = function(set1, set2) {
+    var uniqueSet1 = JSON.parse(JSON.stringify(set1))
+    var uniqueSet2 = JSON.parse(JSON.stringify(set2))
+    for (var id in set1) {
+      delete uniqueSet2[id]
+    }
+    for (var id in set2) {
+      delete uniqueSet1[id]
+    }
+    return [uniqueSet1, uniqueSet2]
   };
 
   /**
@@ -516,6 +528,9 @@ define(['d3'], function() {
         })
         .classed('rebased', function(d) {
           return d.rebased;
+        })
+        .classed('cherry-picked', function(d) {
+          return d.cherryPicked || d.cherryPickSource;
         });
 
       existingCircles.transition()
@@ -530,6 +545,9 @@ define(['d3'], function() {
         .classed('commit', true)
         .classed('merge-commit', function(d) {
           return typeof d.parent2 === 'string';
+        })
+        .classed('cherry-picked', function(d) {
+          return d.cherryPicked || d.cherryPickSource;
         })
         .call(fixCirclePosition)
         .attr('r', 1)
@@ -867,6 +885,19 @@ define(['d3'], function() {
       return this;
     },
 
+    setProperty: function(refs, property) {
+      refs.forEach(function(ref) {
+        this.getCommit(ref)[property] = true
+      }, this)
+    },
+
+    unsetProperty: function(refs, property) {
+      refs.forEach(function(ref) {
+        var commit = this.getCommit(ref)
+        delete commit[property]
+      }, this)
+    },
+
     cherryPick: function(refs, mainline) {
       refs.forEach(function(ref) {
         if (!this.getCommit(ref)) {
@@ -876,6 +907,10 @@ define(['d3'], function() {
       }, this)
 
       if (mainline) {
+        if (mainline > 2 || mainline < 1) {
+          throw new Error("Commit " + refs[0] + "does not have parent " + mainline)
+          return
+        }
         var nonMergeRefs = refs.filter(function(ref) {
           var commit = this.getCommit(ref)
           return !commit.parent || !commit.parent2
@@ -900,7 +935,61 @@ define(['d3'], function() {
           var commit = this.getCommit(ref)
           this.commit({}, commit.message)
         }, this)
+      } else {
+        refs.forEach(function(ref) {
+          var commit = this.getCommit(ref)
+          var cherryPickSource = this.getCherryPickSource(commit.id, mainline)
+
+          this.flashProperty(cherryPickSource, 'cherryPicked', function() {
+            this.commit({cherryPickSource: cherryPickSource}, commit.message)
+          })
+        }, this)
       }
+    },
+
+    getCherryPickSource: function(ref, mainline) {
+      var ancestor1Set = this.getAncestorList(ref, 1)
+      var ancestor2Set = this.getAncestorList(ref, 2)
+      var uniqueAncestors = getUniqueSetItems(ancestor1Set, ancestor2Set)
+      return Object.keys(uniqueAncestors[mainline-1]).concat(ref)
+    },
+
+    flashProperty: function(refs, property, callback) {
+      this.setProperty(refs, property)
+      this.renderCommits()
+      setTimeout(function() {
+        callback.call(this)
+        setTimeout(function() {
+          this.unsetProperty(refs, property)
+          this.renderCommits()
+        }.bind(this), 500)
+      }.bind(this), 1000)
+    },
+
+    getParents: function(ref, mainline) {
+      var commit,
+        parents = []
+      if (ref.id) {
+        commit = ref
+      } else {
+        commit = this.getCommit(ref)
+      }
+      if ((!mainline || mainline === 1) && commit.parent) parents.push(commit.parent)
+      if ((!mainline || mainline === 2) && commit.parent2) parents.push(commit.parent2)
+      return parents
+    },
+
+    getAncestorList: function(ref, mainline) {
+      var ancestors = {}
+      function getAncestor(currentRef, currentMainline) {
+        var parents = this.getParents(currentRef, currentMainline)
+        parents.forEach(function(parentRef) {
+          ancestors[parentRef] = null
+          getAncestor.call(this, parentRef)
+        }, this)
+      }
+      getAncestor.call(this, ref, mainline)
+      return ancestors
     },
 
     branch: function(name) {
