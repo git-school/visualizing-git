@@ -117,7 +117,7 @@ define(['d3'], function() {
         return this.error();
       }
 
-      var method = split[1],
+      var method = split[1].replace(/-/g, '_'),
         args = split.slice(2);
 
       try {
@@ -127,6 +127,7 @@ define(['d3'], function() {
           this.error();
         }
       } catch (ex) {
+        console.error(ex)
         var msg = (ex && ex.message) ? ex.message : null;
         this.error(msg);
       }
@@ -159,6 +160,29 @@ define(['d3'], function() {
       } else {
         this.historyView.commit();
       }
+    },
+
+    cherry_pick: function (args) {
+      var mainline = null;
+      var commits = [];
+      for (var i = 0; i < args.length; i++) {
+        var arg = args[i];
+        if (arg === '-m') {
+          mainline = args[i+1];
+          i++;
+        } else {
+          commits.push(arg);
+        }
+      }
+
+      if (mainline !== null && !mainline.match(/^\d+$/)) {
+        this.error("switch 'm' expects a numerical value");
+        return
+      } else if (mainline) {
+        mainline = parseInt(mainline, 10);
+      }
+
+      this.historyView.cherryPick(commits, mainline);
     },
 
     branch: function(args) {
