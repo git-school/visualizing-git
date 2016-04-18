@@ -527,7 +527,7 @@ define(['d3'], function() {
           return d.reverted;
         })
         .classed('rebased', function(d) {
-          return d.rebased;
+          return d.rebased || d.rebaseSource;
         })
         .classed('cherry-picked', function(d) {
           return d.cherryPicked || d.cherryPickSource;
@@ -545,6 +545,9 @@ define(['d3'], function() {
         .classed('commit', true)
         .classed('merge-commit', function(d) {
           return typeof d.parent2 === 'string';
+        })
+        .classed('rebased', function(d) {
+          return d.rebased || d.rebaseSource
         })
         .classed('cherry-picked', function(d) {
           return d.cherryPicked || d.cherryPickSource;
@@ -948,8 +951,8 @@ define(['d3'], function() {
     },
 
     getCherryPickSource: function(ref, mainline) {
-      var ancestor1Set = this.getAncestorList(ref, 1)
-      var ancestor2Set = this.getAncestorList(ref, 2)
+      var ancestor1Set = this.getAncestorSet(ref, 1)
+      var ancestor2Set = this.getAncestorSet(ref, 2)
       var uniqueAncestors = getUniqueSetItems(ancestor1Set, ancestor2Set)
       return Object.keys(uniqueAncestors[mainline-1]).concat(ref)
     },
@@ -979,12 +982,13 @@ define(['d3'], function() {
       return parents
     },
 
-    getAncestorList: function(ref, mainline) {
+    getAncestorSet: function(ref, mainline) {
       var ancestors = {}
+      var i = 1;
       function getAncestor(currentRef, currentMainline) {
         var parents = this.getParents(currentRef, currentMainline)
         parents.forEach(function(parentRef) {
-          ancestors[parentRef] = null
+          ancestors[parentRef] = i++
           getAncestor.call(this, parentRef)
         }, this)
       }
@@ -1048,7 +1052,6 @@ define(['d3'], function() {
     },
 
     checkout: function(ref) {
-      console.log("checking out", ref)
       var commit = this.getCommit(ref);
 
       if (!commit) {
@@ -1168,79 +1171,36 @@ define(['d3'], function() {
     },
 
     rebase: function(ref) {
-      var rebaseTarget = this.getCommit(ref),
-        currentCommit = this.getCommit('HEAD'),
-        isCommonAncestor,
-        rebaseTreeLoc,
-        rebaseMessage,
-        toRebase = [],
-        rebasedCommit,
-        remainingHusk;
-
-      if (!rebaseTarget) {
-        throw new Error('Cannot find ref: ' + ref);
+      var targetCommit = this.getCommit(ref)
+      if (!targetCommit) {
+        throw new Error("Cannot find commit " + ref) // TODO: better message
       }
 
-      if (currentCommit.id === rebaseTarget.id) {
-        throw new Error('Already up-to-date.');
-      } else if (currentCommit.parent2 === rebaseTarget.id) {
-        throw new Error('Already up-to-date.');
-      }
+      this.branch('ORIG_HEAD')
+      var origHeadCommit = this.getCommit('ORIG_HEAD')
+      this.reset(ref)
 
-      isCommonAncestor = this.isAncestorOf(currentCommit, rebaseTarget);
+      var ancestorsFromTarget = this.getAncestorSet(ref)
+      var ancestorsFromBase = this.getAncestorSet('ORIG_HEAD')
+      var uniqueAncestors = getUniqueSetItems(ancestorsFromTarget, ancestorsFromBase)[1]
+      var commitsToCopy = Object.keys(uniqueAncestors).concat(origHeadCommit.id)
+            .sort(function(key1, key2) {
+              console.log(key1, uniqueAncestors[key1], key2, uniqueAncestors[key2])
+              return uniqueAncestors[key2] - uniqueAncestors[key1]
+            })
 
-      if (isCommonAncestor) {
-        this.fastForward(rebaseTarget);
-        return 'Fast-Forward';
-      }
+      setTimeout(function() {
+        this.flashProperty(commitsToCopy, 'rebased', function() {
+          commitsToCopy.forEach(function(ref) {
+            this.commit({rebased: true, rebaseSource: ref}, this.getCommit(ref).message)
+          }, this)
 
-      rebaseTreeLoc = rebaseTarget.id;
-
-      while (!isCommonAncestor) {
-        toRebase.unshift(currentCommit);
-        currentCommit = this.getCommit(currentCommit.parent);
-        isCommonAncestor = this.isAncestorOf(currentCommit, rebaseTarget);
-      }
-
-      for (var i = 0; i < toRebase.length; i++) {
-        rebasedCommit = toRebase[i];
-        rebaseMessage = rebasedCommit.message;
-
-        remainingHusk = {
-          id: rebasedCommit.id,
-          parent: rebasedCommit.parent,
-          message: rebasedCommit.message,
-          tags: []
-        };
-
-        for (var t = 0; t < rebasedCommit.tags.length; t++) {
-          var tagName = rebasedCommit.tags[t];
-          if (tagName !== this.currentBranch && tagName !== 'HEAD') {
-            remainingHusk.tags.unshift(tagName);
-          }
-        }
-
-        this.commitData.push(remainingHusk);
-
-        rebasedCommit.parent = rebaseTreeLoc;
-        rebaseTreeLoc = HistoryView.generateId()
-        rebasedCommit.id = rebaseTreeLoc;
-        rebasedCommit.message = rebaseMessage;
-        rebasedCommit.tags.length = 0;
-        rebasedCommit.rebased = true;
-      }
-
-      if (this.currentBranch) {
-        rebasedCommit.tags.push(this.currentBranch);
-      }
-
-      this.renderCommits();
-
-      if (this.currentBranch) {
-        this.checkout(this.currentBranch);
-      } else {
-        this.checkout(rebasedCommit.id);
-      }
+          setTimeout(function() {
+            this.deleteBranch('ORIG_HEAD')
+            this.unsetProperty(commitsToCopy, 'rebased')
+          }.bind(this), 1000)
+        })
+      }.bind(this), 1000)
     }
   };
 
