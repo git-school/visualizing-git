@@ -281,13 +281,7 @@ define(['d3'], function() {
         switch (arg) {
           case '-b':
             var name = args[args.length - 1];
-            try {
-              this.historyView.branch(name);
-            } catch (err) {
-              if (err.message.indexOf('already exists') === -1) {
-                throw new Error(err.message);
-              }
-            }
+            this.branch([name])
             break;
           default:
             var remainingArgs = [arg].concat(args);
