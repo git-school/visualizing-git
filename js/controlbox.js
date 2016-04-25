@@ -328,6 +328,22 @@ define(['d3'], function() {
       while (args.length > 0) {
         var arg = args.shift();
 
+        function doReset (name) {
+          this.transact(function() {
+            this.historyView.reset(name);
+          }, function(before, after) {
+            var reflogMsg = "reset: moving to " + name
+            this.historyView.addReflogEntry(
+              'HEAD', after.commit.id, reflogMsg
+            )
+            if (before.branch) {
+              this.historyView.addReflogEntry(
+                before.branch, after.commit.id, reflogMsg
+              )
+            }
+          })
+        }
+
         switch (arg) {
           case '--soft':
             this.info(
@@ -339,18 +355,19 @@ define(['d3'], function() {
           case '--mixed':
             this.info(
               'The "--mixed" flag works in real git, but ' +
-              'I am unable to show you how it works in this demo.'
+              'I am unable to show you how it works in this demo. ' +
+              'So I am just going to show you what "--hard" looks like instead.'
             );
             break;
           case '--hard':
-            this.historyView.reset(args.join(' '));
+            doReset.call(this, args.join(' '));
             args.length = 0;
             break;
           default:
             var remainingArgs = [arg].concat(args);
             args.length = 0;
             this.info('Assuming "--hard".');
-            this.historyView.reset(remainingArgs.join(' '));
+            doReset.call(this, remainingArgs.join(' '));
         }
       }
     },
