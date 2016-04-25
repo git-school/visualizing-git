@@ -378,6 +378,7 @@ define(['d3'], function() {
     merge: function(args) {
       var noFF = false;
       var branch = args[0];
+      var result
       if (args.length === 2) {
         if (args[0] === '--no-ff') {
           noFF = true;
@@ -389,11 +390,29 @@ define(['d3'], function() {
           this.info('This demo only supports the --no-ff switch..');
         }
       }
-      var result = this.historyView.merge(branch, noFF);
 
-      if (result === 'Fast-Forward') {
-        this.info('You have performed a fast-forward merge.');
-      }
+      this.transact(function() {
+        result = this.historyView.merge(branch, noFF);
+
+        if (result === 'Fast-Forward') {
+          this.info('You have performed a fast-forward merge.');
+        }
+      }, function(before, after) {
+        var reflogMsg = "merge " + branch + ": "
+        if (result === 'Fast-Forward') {
+          reflogMsg += "Fast-forward"
+        } else {
+          reflogMsg += "Merge made by the 'recursive' strategy."
+        }
+        this.historyView.addReflogEntry(
+          'HEAD', after.commit.id, reflogMsg
+        )
+        if (before.branch) {
+          this.historyView.addReflogEntry(
+            before.branch, after.commit.id, reflogMsg
+          )
+        }
+      })
     },
 
     rebase: function(args) {
