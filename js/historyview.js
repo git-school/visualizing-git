@@ -946,17 +946,37 @@ define(['d3'], function() {
       if (!mainline) {
         refs.forEach(function(ref) {
           var commit = this.getCommit(ref)
+          var message = commit.message || ""
           this.flashProperty([commit.id], 'cherryPicked', function() {
-            this.commit({cherryPickSource: [commit.id]}, commit.message)
+            this.commit({cherryPickSource: [commit.id]}, message)
+            var reflogMessage = "cherry-pick: " + message
+            this.addReflogEntry(
+              'HEAD', this.getCommit('HEAD').id, reflogMessage
+            )
+            if (this.currentBranch) {
+              this.addReflogEntry(
+                this.currentBranch, this.getCommit('HEAD').id, reflogMessage
+              )
+            }
           })
         }, this)
       } else {
         refs.forEach(function(ref) {
           var commit = this.getCommit(ref)
+          var message = commit.message || ""
           var cherryPickSource = this.getCherryPickSource(commit.id, mainline)
 
           this.flashProperty(cherryPickSource, 'cherryPicked', function() {
-            this.commit({cherryPickSource: cherryPickSource}, commit.message)
+            this.commit({cherryPickSource: cherryPickSource}, message)
+            var reflogMessage = "cherry-pick: " + message
+            this.addReflogEntry(
+              'HEAD', this.getCommit('HEAD').id, reflogMessage
+            )
+            if (this.currentBranch) {
+              this.addReflogEntry(
+                this.currentBranch, this.getCommit('HEAD').id, reflogMessage
+              )
+            }
           })
         }, this)
       }

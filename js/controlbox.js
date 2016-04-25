@@ -214,6 +214,8 @@ define(['d3'], function() {
         mainline = parseInt(mainline, 10);
       }
 
+      // FIXME: because `cherryPick` is asynchronous,
+      // it is responsible for its own reflog entries
       this.historyView.cherryPick(commits, mainline);
     },
 
