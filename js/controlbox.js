@@ -431,6 +431,8 @@ define(['d3'], function() {
       var ref = args.shift(),
         result = this.historyView.rebase(ref);
 
+      // FIXME: rebase is async, so manages its own
+      // reflog entries
       if (result === 'Fast-Forward') {
         this.info('Fast-forwarded to ' + ref + '.');
       }

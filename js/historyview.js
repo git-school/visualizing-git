@@ -1211,10 +1211,16 @@ define(['d3'], function() {
 
       this.branch('ORIG_HEAD')
       var origHeadCommit = this.getCommit('ORIG_HEAD')
-      this.reset(ref)
+      var origBranch = this.currentBranch
+      var origRef = origBranch || origHeadCommit.id
+
+      this.checkout(targetCommit.id)
+      this.addReflogEntry(
+        'HEAD', targetCommit.id, 'rebase: checkout ' + ref
+      )
 
       var ancestorsFromTarget = this.getAncestorSet(ref)
-      var ancestorsFromBase = this.getAncestorSet('ORIG_HEAD')
+      var ancestorsFromBase = this.getAncestorSet(origHeadCommit.id)
       var uniqueAncestors = getUniqueSetItems(ancestorsFromTarget, ancestorsFromBase)[1]
       var commitsToCopy = Object.keys(uniqueAncestors).concat(origHeadCommit.id)
             .sort(function(key1, key2) {
@@ -1227,9 +1233,20 @@ define(['d3'], function() {
           commitsToCopy.forEach(function(ref) {
             this.commit({rebased: true, rebaseSource: ref}, this.getCommit(ref).message)
           }, this)
-
+          var newHeadCommit = this.getCommit('HEAD')
           setTimeout(function() {
             this.deleteBranch('ORIG_HEAD')
+            if (origBranch) {
+              this.moveTag(origBranch, newHeadCommit.id)
+              this.reset(origBranch)
+              this.addReflogEntry(
+                'HEAD', targetCommit.id, 'rebase finished: returning to resf/heads/' + origBranch
+              )
+              this.addReflogEntry(
+                origBranch, newHeadCommit.id, 'rebase finished: refs/heads/' +
+                origBranch + ' onto ' + targetCommit.id
+              )
+            }
             this.unsetProperty(commitsToCopy, 'rebased')
           }.bind(this), 1000)
         })
