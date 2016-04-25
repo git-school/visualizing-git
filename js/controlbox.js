@@ -395,7 +395,6 @@ define(['d3'], function() {
           )
         }
       })
-      this.historyView.revert(args.shift());
     },
 
     merge: function(args) {
