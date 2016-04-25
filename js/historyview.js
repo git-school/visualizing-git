@@ -946,7 +946,9 @@ define(['d3'], function() {
       if (!mainline) {
         refs.forEach(function(ref) {
           var commit = this.getCommit(ref)
-          this.commit({}, commit.message)
+          this.flashProperty([commit.id], 'cherryPicked', function() {
+            this.commit({cherryPickSource: [commit.id]}, commit.message)
+          })
         }, this)
       } else {
         refs.forEach(function(ref) {
