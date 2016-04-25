@@ -144,22 +144,54 @@ define(['d3'], function() {
       this._scrollToBottom();
     },
 
-    commit: function(args) {
-      if (args.length >= 2) {
-        var arg = args.shift();
+    transact: function(action, after) {
+      var oldCommit = this.historyView.getCommit('HEAD')
+      var oldBranch = this.historyView.currentBranch
+      var oldRef = oldBranch || oldCommit.id
+      action.call(this)
+      var newCommit = this.historyView.getCommit('HEAD')
+      var newBranch = this.historyView.currentBranch
+      var newRef = newBranch || newCommit.id
+      after.call(this, {
+        commit: oldCommit,
+        branch: oldBranch,
+        ref: oldRef
+      }, {
+        commit: newCommit,
+        branch: newBranch,
+        ref: newRef
+      })
+    },
 
-        switch (arg) {
-          case '-m':
-            var message = args.join(" ");
-            this.historyView.commit({}, message);
-            break;
-          default:
-            this.historyView.commit();
-            break;
+    commit: function(args) {
+      var msg = ""
+      this.transact(function() {
+        if (args.length >= 2) {
+          var arg = args.shift();
+
+          switch (arg) {
+            case '-m':
+              msg = args.join(" ");
+              this.historyView.commit({}, msg);
+              break;
+            default:
+              this.historyView.commit();
+              break;
+          }
+        } else {
+          this.historyView.commit();
         }
-      } else {
-        this.historyView.commit();
-      }
+      }, function(before, after) {
+        var reflogMsg = 'commit: ' + msg
+        this.historyView.addReflogEntry(
+          'HEAD', after.commit.id, reflogMsg
+        )
+        if(before.branch) {
+          this.historyView.addReflogEntry(
+            before.branch, after.commit.id, reflogMsg
+          )
+        }
+      })
     },
 
     cherry_pick: function (args) {
@@ -248,7 +280,16 @@ define(['d3'], function() {
           default:
             var remainingArgs = [arg].concat(args);
             args.length = 0;
-            this.historyView.checkout(remainingArgs.join(' '));
+            var rest = remainingArgs.join(' ')
+            this.transact(function() {
+              this.historyView.checkout(rest);
+            }, function(before, after) {
+              this.historyView.addReflogEntry(
+                'HEAD', after.commit.id,
+                'checkout: moving from ' + before.ref +
+                ' to ' + rest
+              )
+            })
         }
       }
     },
@@ -313,6 +354,24 @@ define(['d3'], function() {
     },
 
     revert: function(args) {
+      if(args.length === 0) {
+        this.error('You must specify a commit to revert');
+        return
+      }
+
+      this.transact(function() {
+        this.historyView.revert(args.shift());
+      }, function(before, after) {
+        var reflogMsg = 'revert: ' + before.commit.message || before.commit.id
+        this.historyView.addReflogEntry(
+          'HEAD', after.commit.id, reflogMsg
+        )
+        if(before.branch) {
+          this.historyView.addReflogEntry(
+            before.branch, after.commit.id, reflogMsg
+          )
+        }
+      })
       this.historyView.revert(args.shift());
     },
 
