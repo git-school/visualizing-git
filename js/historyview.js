@@ -1074,6 +1074,7 @@ define(['d3'], function() {
 
       this.branches.splice(branchIndex, 1);
       commit = this.getCommit(name);
+      delete this.logs[name]
       branchIndex = commit.tags.indexOf(name);
 
       if (branchIndex > -1) {

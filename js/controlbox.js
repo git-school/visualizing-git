@@ -258,7 +258,17 @@ define(['d3'], function() {
             } else {
               var remainingArgs = [arg].concat(args);
               args.length = 0;
-              this.historyView.branch(remainingArgs.join(' '));
+              var branchName = remainingArgs.join(' ')
+
+              this.transact(function() {
+                this.historyView.branch(branchName);
+              }, function(before, after) {
+                var branchCommit = this.historyView.getCommit(branchName)
+                var reflogMsg = "branch: created from " + before.ref
+                this.historyView.addReflogEntry(
+                  branchName, branchCommit.id, reflogMsg
+                )
+              })
             }
         }
       }
