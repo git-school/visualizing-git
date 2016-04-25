@@ -611,7 +611,7 @@ define(['d3'], function() {
 
       // push to an existing branch on the remote
       if (remoteCommit && remote.branches.indexOf(remoteRef) > -1) {
-        if (!local.isAncestor(remoteCommit.id, localCommit.id)) {
+        if (!local.isAncestorOf(remoteCommit.id, localCommit.id)) {
           throw new Error('Push rejected. Non fast-forward.');
         }
 
