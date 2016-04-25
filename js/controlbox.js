@@ -127,7 +127,7 @@ define(['d3'], function() {
           this.error();
         }
       } catch (ex) {
-        console.error(ex)
+        console.error(ex.stack)
         var msg = (ex && ex.message) ? ex.message : null;
         this.error(msg);
       }
