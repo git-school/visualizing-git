@@ -921,7 +921,7 @@ define(['d3'], function() {
 
       if (mainline) {
         if (mainline > 2 || mainline < 1) {
-          throw new Error("Commit " + refs[0] + "does not have parent " + mainline)
+          throw new Error("Commit " + refs[0] + " does not have parent " + mainline)
           return
         }
         var nonMergeRefs = refs.filter(function(ref) {
@@ -983,6 +983,9 @@ define(['d3'], function() {
     },
 
     getCherryPickSource: function(ref, mainline) {
+      if (mainline === 1) mainline = 2
+      else if (mainline === 2) mainline = 1
+      else throw new Error("Mainline " + mainline + " isn't supported")
       var ancestor1Set = this.getAncestorSet(ref, 1)
       var ancestor2Set = this.getAncestorSet(ref, 2)
       var uniqueAncestors = getUniqueSetItems(ancestor1Set, ancestor2Set)
