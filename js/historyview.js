@@ -381,6 +381,15 @@ define(['d3'], function() {
       return matchedCommit;
     },
 
+    revparse: function(refspec) {
+      var commit
+      if (commit = this.getCommit(refspec)) {
+        return commit.id
+      } else {
+        throw new Error("Cannot find object from refspec " + refspec)
+      }
+    },
+
     /**
      * @method getCircle
      * @param ref {String} the id or a tag name that refers to the commit

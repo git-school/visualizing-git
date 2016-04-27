@@ -194,6 +194,12 @@ define(['d3'], function() {
       })
     },
 
+    rev_parse: function(args) {
+      args.forEach(function(arg) {
+        this.info(this.historyView.revparse(arg))
+      }, this)
+    },
+
     cherry_pick: function (args) {
       var mainline = null;
       var commits = [];
