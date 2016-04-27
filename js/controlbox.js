@@ -639,6 +639,49 @@ define(['d3'], function() {
           this.rebase[path[1]] = args.pop();
         }
       }
+    },
+
+    reflog: function (args) {
+      var reflogExistsFor = function (ref) {
+        return this.historyView.logs[ref.toLowerCase()]
+      }.bind(this)
+
+      var ref = ""
+      var subcommand = "show"
+      if (args.length === 0) {
+        ref = "HEAD"
+      } else if (args.length === 1) {
+        ref = args[0].trim()
+        if (ref === "show" || ref === "expire" || ref === "delete" || ref === "exists") {
+          subcommand = ref
+          ref = "HEAD"
+        }
+      } else if (args.length === 2) {
+        subcommand = args[0]
+        ref = args[1]
+      } else {
+        this.error("'git reflog' can take at most two arguments in this tool")
+        return
+      }
+
+      if (!ref) {
+        this.error("No ref specified")
+        return
+      }
+
+      if (subcommand === "exists") {
+        if (reflogExistsFor(ref)) {
+          this.info("Reflog for ref " + ref + " exists")
+        } else {
+          this.error("Reflog for ref " + ref + " does not exist")
+        }
+      } else if (subcommand === "show") {
+        var log = this.historyView.getFormattedReflog(ref)
+        this.info(log.replace(/\n/g, "<br>"))
+      } else if (subcommand === "expire" || subcommand === "delete") {
+        this.info("Real git reflog supports the '" + subcommand +
+                  "' subcommand but this tool only supports 'show' and 'exists'")
+      }
     }
   };
 

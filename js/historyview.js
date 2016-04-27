@@ -853,11 +853,22 @@ define(['d3'], function() {
     },
 
     addReflogEntry: function(ref, destination, reason) {
+      ref = ref.toLowerCase()
       this.logs[ref] = this.logs[ref] || []
       this.logs[ref].unshift({
         destination: destination,
         reason: reason
       })
+    },
+
+    getFormattedReflog: function(ref) {
+      if (!this.logs[ref.toLowerCase()]) {
+        throw new Error("no reflog for " + ref)
+      }
+
+      return this.logs[ref.toLowerCase()].map(function(entry, idx) {
+        return entry.destination + " " + ref + "@{" + idx + "} " + " " + entry.reason
+      }).join("\n")
     },
 
     moveTag: function(tag, ref) {
