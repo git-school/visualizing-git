@@ -77,14 +77,14 @@ define(['d3'], function() {
       });
 
       this.container = cBoxContainer;
-      this.log = log;
+      this.terminalOutput = log;
       this.input = input;
 
       this.info(this.initialMessage);
     },
 
     destroy: function() {
-      this.log.remove();
+      this.terminalOutput.remove();
       this.input.remove();
       this.container.remove();
 
@@ -96,7 +96,7 @@ define(['d3'], function() {
     },
 
     _scrollToBottom: function() {
-      var log = this.log.node();
+      var log = this.terminalOutput.node();
       log.scrollTop = log.scrollHeight;
     },
 
@@ -107,7 +107,7 @@ define(['d3'], function() {
 
       var split = entry.split(' ');
 
-      this.log.append('div')
+      this.terminalOutput.append('div')
         .classed('command-entry', true)
         .html(entry);
 
@@ -134,13 +134,13 @@ define(['d3'], function() {
     },
 
     info: function(msg) {
-      this.log.append('div').classed('info', true).html(msg);
+      this.terminalOutput.append('div').classed('info', true).html(msg);
       this._scrollToBottom();
     },
 
     error: function(msg) {
       msg = msg || 'I don\'t understand that.';
-      this.log.append('div').classed('error', true).html(msg);
+      this.terminalOutput.append('div').classed('error', true).html(msg);
       this._scrollToBottom();
     },
 
