@@ -664,8 +664,8 @@ function(yargs) {
           this.error("Reflog for ref " + ref + " does not exist")
         }
       } else if (subcommand === "show") {
-        var log = this.historyView.getFormattedReflog(ref)
-        this.info(log.replace(/\n/g, "<br>"))
+        var logs = this.historyView.getReflogEntries(ref)
+        this.info(logs.join("<br>"))
       } else if (subcommand === "expire" || subcommand === "delete") {
         this.info("Real git reflog supports the '" + subcommand +
                   "' subcommand but this tool only supports 'show' and 'exists'")

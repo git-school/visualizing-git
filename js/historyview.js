@@ -873,14 +873,14 @@ define(['d3'], function() {
       })
     },
 
-    getFormattedReflog: function(ref) {
+    getReflogEntries: function(ref) {
       if (!this.logs[ref.toLowerCase()]) {
         throw new Error("no reflog for " + ref)
       }
 
       return this.logs[ref.toLowerCase()].map(function(entry, idx) {
         return entry.destination + " " + ref + "@{" + idx + "} " + " " + entry.reason
-      }).join("\n")
+      })
     },
 
     moveTag: function(tag, ref) {
