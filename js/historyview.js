@@ -898,7 +898,7 @@ define(['d3'], function() {
       !commit.id && (commit.id = HistoryView.generateId());
       !commit.tags && (commit.tags = []);
 
-      commit.message = message;
+      commit.message = message.replace(/^"(.*)"$/,"$1").replace(/^'(.*)'$/,"$1");
       if (!commit.parent) {
         commit.parent = this.getCommit('HEAD').id;
       }
