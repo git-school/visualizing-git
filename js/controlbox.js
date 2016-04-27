@@ -1,6 +1,17 @@
 define(['vendor/yargs-parser', 'd3'],
-function(yargs) {
+function(_yargs) {
   "use strict";
+
+  function yargs(str, opts) {
+    var result = _yargs(str, opts)
+
+    // make every value in result._ a string
+    result._ = result._.map(function(val) {
+      return "" + val
+    })
+
+    return result
+  }
 
   /**
    * @class ControlBox
