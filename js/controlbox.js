@@ -167,23 +167,17 @@ function(yargs) {
       })
     },
 
-    commit: function(args) {
+    commit: function(args, opts, cmdStr) {
+      opts = yargs(cmdStr, {
+        boolean: ['amend'],
+        string: ['m']
+      })
       var msg = ""
       this.transact(function() {
-        if (args.length >= 2) {
-          var arg = args.shift();
-
-          switch (arg) {
-            case '-m':
-              msg = args.join(" ");
-              this.historyView.commit({}, msg);
-              break;
-            default:
-              this.historyView.commit();
-              break;
-          }
+        if (opts.amend) {
+          this.historyView.amendCommit(opts.m)
         } else {
-          this.historyView.commit();
+          this.historyView.commit(null, opts.m);
         }
       }, function(before, after) {
         var reflogMsg = 'commit: ' + msg
