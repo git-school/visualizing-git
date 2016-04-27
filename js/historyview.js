@@ -540,6 +540,9 @@ define(['d3'], function() {
         .classed('rebased', function(d) {
           return d.rebased || d.rebaseSource;
         })
+        .classed('logging', function(d) {
+          return d.logging;
+        })
         .classed('cherry-picked', function(d) {
           return d.cherryPicked || d.cherryPickSource;
         });
@@ -925,7 +928,9 @@ define(['d3'], function() {
       var ancestors = this.getAncestorSet(refspec)
       delete ancestors.initial
       ancestors[refspec] = -1
-      return Object.keys(ancestors).map(function(commitId) {
+      var commitIds = Object.keys(ancestors)
+      this.flashProperty(commitIds, 'logging')
+      return commitIds.map(function(commitId) {
         return {commit: this.getCommit(commitId), order: ancestors[commitId]}
       }, this).sort(function(a,b) {
         return a.order - b.order
@@ -1033,7 +1038,7 @@ define(['d3'], function() {
       this.setProperty(refs, property)
       this.renderCommits()
       setTimeout(function() {
-        callback.call(this)
+        callback && callback.call(this)
         setTimeout(function() {
           this.unsetProperty(refs, property)
           this.renderCommits()

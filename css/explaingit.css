@@ -184,11 +184,6 @@ circle.commit {
   transition-timing-function: ease-out;
 }
 
-circle.commit.checked-out {
-  fill: #CCFFCC !important;
-  stroke: #339900;
-}
-
 circle.commit.merge-commit {
   stroke: #663300;
   fill: #FFFFCC;
@@ -209,9 +204,19 @@ circle.commit.cherry-picked {
   fill: #FFEEEE;
 }
 
+circle.commit.checked-out {
+  fill: #CCFFCC;
+  stroke: #339900;
+}
+
 circle.commit.branchless {
   fill: #FEFEFE;
   stroke: #DDD;
+}
+
+circle.commit.logging {
+  stroke: #0066CC;
+  fill: #0099EE;
 }
 
 .commit-pointer {
