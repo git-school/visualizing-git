@@ -213,20 +213,19 @@ function(yargs) {
       }, this)
     },
 
-    cherry_pick: function (args, options) {
-      var mainline = options.m
-      var commits = options._
+    cherry_pick: function (args, opt, cmdStr) {
+      opt = yargs(cmdStr, {
+        alias: { mainline: ['m'] }
+      })
 
-      if (mainline !== null && isNaN(mainline)) {
+      if (opt.mainline !== undefined && isNaN(opt.mainline)) {
         this.error("switch 'm' expects a numerical value");
         return
-      } else if (mainline) {
-        mainline = parseInt(mainline, 10);
       }
 
       // FIXME: because `cherryPick` is asynchronous,
       // it is responsible for its own reflog entries
-      this.historyView.cherryPick(commits, mainline);
+      this.historyView.cherryPick(opt._, opt.mainline);
     },
 
     branch: function(args) {
