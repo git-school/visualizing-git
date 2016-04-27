@@ -895,15 +895,16 @@ define(['d3'], function() {
       return this;
     },
 
+    amendCommit: function(message) {
+      this.commit({parent: this.getCommit('head^').id}, message)
+    },
+
     commit: function(commit, message) {
       commit = commit || {};
 
       !commit.id && (commit.id = HistoryView.generateId());
       !commit.tags && (commit.tags = []);
 
-      if (message) {
-        message = message.replace(/^"(.*)"$/,"$1").replace(/^'(.*)'$/,"$1")
-      }
       commit.message = message
       if (!commit.parent) {
         commit.parent = this.getCommit('HEAD').id;
