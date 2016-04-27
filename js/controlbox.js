@@ -1,4 +1,5 @@
-define(['d3'], function() {
+define(['vendor/yargs-parser', 'd3'],
+function(yargs) {
   "use strict";
 
   /**
@@ -118,11 +119,14 @@ define(['d3'], function() {
       }
 
       var method = split[1].replace(/-/g, '_'),
-        args = split.slice(2);
+        args = split.slice(2),
+        argsStr = args.join(' ')
+
+      var options = yargs(argsStr)
 
       try {
         if (typeof this[method] === 'function') {
-          this[method](args);
+          this[method](args, options, argsStr);
         } else {
           this.error();
         }
@@ -209,20 +213,11 @@ define(['d3'], function() {
       }, this)
     },
 
-    cherry_pick: function (args) {
-      var mainline = null;
-      var commits = [];
-      for (var i = 0; i < args.length; i++) {
-        var arg = args[i];
-        if (arg === '-m') {
-          mainline = args[i+1];
-          i++;
-        } else {
-          commits.push(arg);
-        }
-      }
+    cherry_pick: function (args, options) {
+      var mainline = options.m
+      var commits = options._
 
-      if (mainline !== null && !mainline.match(/^\d+$/)) {
+      if (mainline !== null && isNaN(mainline)) {
         this.error("switch 'm' expects a numerical value");
         return
       } else if (mainline) {
