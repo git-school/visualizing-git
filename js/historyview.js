@@ -381,6 +381,15 @@ define(['d3'], function() {
       return matchedCommit;
     },
 
+    revparse: function(refspec) {
+      var commit
+      if (commit = this.getCommit(refspec)) {
+        return commit.id
+      } else {
+        throw new Error("Cannot find object from refspec " + refspec)
+      }
+    },
+
     /**
      * @method getCircle
      * @param ref {String} the id or a tag name that refers to the commit
@@ -853,11 +862,22 @@ define(['d3'], function() {
     },
 
     addReflogEntry: function(ref, destination, reason) {
+      ref = ref.toLowerCase()
       this.logs[ref] = this.logs[ref] || []
       this.logs[ref].unshift({
         destination: destination,
         reason: reason
       })
+    },
+
+    getFormattedReflog: function(ref) {
+      if (!this.logs[ref.toLowerCase()]) {
+        throw new Error("no reflog for " + ref)
+      }
+
+      return this.logs[ref.toLowerCase()].map(function(entry, idx) {
+        return entry.destination + " " + ref + "@{" + idx + "} " + " " + entry.reason
+      }).join("\n")
     },
 
     moveTag: function(tag, ref) {
