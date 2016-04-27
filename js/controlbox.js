@@ -1,5 +1,5 @@
-define(['command-parser', 'vendor/yargs-parser', 'd3'],
-function(CommandParser, yargs) {
+define(['vendor/yargs-parser', 'd3'],
+function(yargs) {
   "use strict";
 
   /**
