@@ -9,7 +9,7 @@ define([], function() {
                 args.push(part);
                 part = '';
             } else {
-                if(str.charAt(i) === '\"' === "'" && lookForQuotes) {
+                if(str.charAt(i) === '\"' && lookForQuotes) {
                     readingPart = !readingPart;
                 } else {
                     part += str.charAt(i);
