@@ -1073,6 +1073,20 @@ define(['d3'], function() {
       return ancestors
     },
 
+    getBranchList: function() {
+      return this.commitData.reduce(function(acc, commit) {
+        return acc.concat(commit.tags.filter(function(tag) {
+          return !tag.match(/^\[.*\]$/) && tag !== 'HEAD'
+        }))
+      }, []).map(function(tag) {
+        if (this.currentBranch && (tag.toLowerCase() === this.currentBranch.toLowerCase())) {
+          return '* ' + tag
+        } else {
+          return '&nbsp; ' + tag
+        }
+      }, this)
+    },
+
     branch: function(name, startCommit) {
       if (!name || name.trim() === '') {
         throw new Error('You need to give a branch name.');

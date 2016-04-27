@@ -227,61 +227,45 @@ function(yargs) {
       this.historyView.cherryPick(opt._, opt.mainline);
     },
 
-    branch: function(args) {
-      if (args.length < 1) {
-        this.info(
-          'You need to give a branch name. ' +
-          'Normally if you don\'t give a name, ' +
-          'this command will list your local branches on the screen.'
-        );
+    branch: function(args, options, cmdStr) {
+      console.log(cmdStr)
+      options = yargs(cmdStr, {
+        alias: { delete: ['d'], remote: ['r'], all: ['a'] },
+        boolean: ['a', 'r']
+      })
+      var branchName = options._[0]
+      var startPoint = options._[1] || 'head'
 
-        return;
+      if (options.delete) {
+        return this.historyView.deleteBranch(options.delete);
       }
 
-      while (args.length > 0) {
-        var arg = args.shift();
-
-        switch (arg) {
-          case '--remote':
-          case '-r':
-            this.info(
-              'This command normally displays all of your remote tracking branches.'
-            );
-            args.length = 0;
-            break;
-          case '--all':
-          case '-a':
-            this.info(
-              'This command normally displays all of your tracking branches, both remote and local.'
-            );
-            break;
-          case '--delete':
-          case '-d':
-            var name = args.pop();
-            this.historyView.deleteBranch(name);
-            break;
-          default:
-            if (arg.charAt(0) === '-') {
-              this.error();
-            } else {
-              var branchName = arg
-              var startCommit = args.shift() || 'head'
-              if (args.length) {
-                // TODO: error handling if too many args?
-              }
-
-              this.transact(function() {
-                this.historyView.branch(branchName, startCommit);
-              }, function(before, after) {
-                var branchCommit = this.historyView.getCommit(branchName)
-                var reflogMsg = "branch: created from " + before.ref
-                this.historyView.addReflogEntry(
-                  branchName, branchCommit.id, reflogMsg
-                )
-              })
-            }
-        }
+      if (options.remote) {
+        return this.info('This command normally displays all of your remote tracking branches.');
       }
+
+      if (options.all) {
+        return this.info('This command normally displays all of your tracking branches, both remote and local.');
+      }
+
+      if (options._[2]) {
+        return this.error('Incorrect usage - supplied too many arguments')
+      }
+
+      if (!branchName) {
+        var branches = this.historyView.getBranchList().join('<br>')
+        console.log(branches);
+        return this.info(branches)
+      }
+
+      this.transact(function() {
+        this.historyView.branch(branchName, startPoint)
+      }, function(before, after) {
+        var branchCommit = this.historyView.getCommit(branchName)
+        var reflogMsg = "branch: created from " + before.ref
+        this.historyView.addReflogEntry(branchName, branchCommit.id, reflogMsg)
+      })
+
     },
 
     checkout: function(args, opts) {
