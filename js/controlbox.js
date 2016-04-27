@@ -213,20 +213,19 @@ function(yargs) {
       }, this)
     },
 
-    cherry_pick: function (args, options) {
-      var mainline = options.m
-      var commits = options._
+    cherry_pick: function (args, opt, cmdStr) {
+      opt = yargs(cmdStr, {
+        alias: { mainline: ['m'] }
+      })
 
-      if (mainline !== null && isNaN(mainline)) {
+      if (opt.mainline !== undefined && isNaN(opt.mainline)) {
         this.error("switch 'm' expects a numerical value");
         return
-      } else if (mainline) {
-        mainline = parseInt(mainline, 10);
       }
 
       // FIXME: because `cherryPick` is asynchronous,
       // it is responsible for its own reflog entries
-      this.historyView.cherryPick(commits, mainline);
+      this.historyView.cherryPick(opt._, opt.mainline);
     },
 
     branch: function(args) {
@@ -286,30 +285,24 @@ function(yargs) {
       }
     },
 
-    checkout: function(args) {
-      while (args.length > 0) {
-        var arg = args.shift();
-
-        switch (arg) {
-          case '-b':
-            var name = args[args.length - 1];
-            this.branch([name])
-            break;
-          default:
-            var remainingArgs = [arg].concat(args);
-            args.length = 0;
-            var rest = remainingArgs.join(' ')
-            this.transact(function() {
-              this.historyView.checkout(rest);
-            }, function(before, after) {
-              this.historyView.addReflogEntry(
-                'HEAD', after.commit.id,
-                'checkout: moving from ' + before.ref +
-                ' to ' + rest
-              )
-            })
-        }
+    checkout: function(args, opts) {
+      if (opts.b) {
+        // TODO: if we passed opts._[0], create from that base
+        // otherwise default it to HEAD
+        this.branch([opts.b], {}, opts.b)
       }
+
+      var name = opts.b || opts._[0]
+
+      this.transact(function() {
+        this.historyView.checkout(name);
+      }, function(before, after) {
+        this.historyView.addReflogEntry(
+          'HEAD', after.commit.id,
+          'checkout: moving from ' + before.ref +
+          ' to ' + name
+        )
+      })
     },
 
     tag: function(args) {
