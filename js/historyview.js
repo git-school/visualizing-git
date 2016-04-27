@@ -924,7 +924,7 @@ define(['d3'], function() {
       return this;
     },
 
-    log: function(refspec) {
+    getLogEntries: function(refspec) {
       var ancestors = this.getAncestorSet(refspec)
       delete ancestors.initial
       ancestors[refspec] = -1
@@ -937,7 +937,7 @@ define(['d3'], function() {
       }).map(function(commitInfo) {
           var commit = commitInfo.commit
           return commit.id + ' ' + (commit.message || "(no message)")
-        }, this).join('\n')
+        }, this)
     },
 
     setProperty: function(refs, property) {
@@ -1073,7 +1073,21 @@ define(['d3'], function() {
       return ancestors
     },
 
-    branch: function(name) {
+    getBranchList: function() {
+      return this.commitData.reduce(function(acc, commit) {
+        return acc.concat(commit.tags.filter(function(tag) {
+          return !tag.match(/^\[.*\]$/) && tag !== 'HEAD'
+        }))
+      }, []).map(function(tag) {
+        if (this.currentBranch && (tag.toLowerCase() === this.currentBranch.toLowerCase())) {
+          return '* ' + tag
+        } else {
+          return '&nbsp; ' + tag
+        }
+      }, this)
+    },
+
+    branch: function(name, startCommit) {
       if (!name || name.trim() === '') {
         throw new Error('You need to give a branch name.');
       }
@@ -1082,15 +1096,15 @@ define(['d3'], function() {
         throw new Error('You cannot name your branch "HEAD".');
       }
 
-      if (name.indexOf(' ') > -1) {
-        throw new Error('Branch names cannot contain spaces.');
-      }
-
       if (this.branches.indexOf(name) > -1) {
         throw new Error('Branch "' + name + '" already exists.');
       }
 
-      this.getCommit('HEAD').tags.push(name);
+      var startPoint = this.getCommit(startCommit || 'head')
+      if (!startPoint) {
+        throw new Error("fatal: Not a valid object name:'" + startCommit + "'")
+      }
+      startPoint.tags.push(name);
       this.renderTags();
       return this;
     },

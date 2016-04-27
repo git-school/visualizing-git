@@ -202,8 +202,7 @@ function(yargs) {
       if (args.length > 1) {
         return this.error("'git log' can take at most one argument in this tool")
       }
-      var logs = this.historyView.log(args[0] || 'head')
-      logs = logs.replace(/\n/g, "<br>")
+      var logs = this.historyView.getLogEntries(args[0] || 'head').join('<br>')
       this.info(logs)
     },
 
@@ -228,66 +227,52 @@ function(yargs) {
       this.historyView.cherryPick(opt._, opt.mainline);
     },
 
-    branch: function(args) {
-      if (args.length < 1) {
-        this.info(
-          'You need to give a branch name. ' +
-          'Normally if you don\'t give a name, ' +
-          'this command will list your local branches on the screen.'
-        );
+    branch: function(args, options, cmdStr) {
+      options = yargs(cmdStr, {
+        alias: { delete: ['d'], remote: ['r'], all: ['a'] },
+        boolean: ['a', 'r']
+      })
+      var branchName = options._[0]
+      var startPoint = options._[1] || 'head'
 
-        return;
+      if (options.delete) {
+        return this.historyView.deleteBranch(options.delete);
       }
 
-      while (args.length > 0) {
-        var arg = args.shift();
-
-        switch (arg) {
-          case '--remote':
-          case '-r':
-            this.info(
-              'This command normally displays all of your remote tracking branches.'
-            );
-            args.length = 0;
-            break;
-          case '--all':
-          case '-a':
-            this.info(
-              'This command normally displays all of your tracking branches, both remote and local.'
-            );
-            break;
-          case '--delete':
-          case '-d':
-            var name = args.pop();
-            this.historyView.deleteBranch(name);
-            break;
-          default:
-            if (arg.charAt(0) === '-') {
-              this.error();
-            } else {
-              var remainingArgs = [arg].concat(args);
-              args.length = 0;
-              var branchName = remainingArgs.join(' ')
-
-              this.transact(function() {
-                this.historyView.branch(branchName);
-              }, function(before, after) {
-                var branchCommit = this.historyView.getCommit(branchName)
-                var reflogMsg = "branch: created from " + before.ref
-                this.historyView.addReflogEntry(
-                  branchName, branchCommit.id, reflogMsg
-                )
-              })
-            }
-        }
+      if (options.remote) {
+        return this.info('This command normally displays all of your remote tracking branches.');
       }
+
+      if (options.all) {
+        return this.info('This command normally displays all of your tracking branches, both remote and local.');
+      }
+
+      if (options._[2]) {
+        return this.error('Incorrect usage - supplied too many arguments')
+      }
+
+      if (!branchName) {
+        var branches = this.historyView.getBranchList().join('<br>')
+        return this.info(branches)
+      }
+
+      this.transact(function() {
+        this.historyView.branch(branchName, startPoint)
+      }, function(before, after) {
+        var branchCommit = this.historyView.getCommit(branchName)
+        var reflogMsg = "branch: created from " + before.ref
+        this.historyView.addReflogEntry(branchName, branchCommit.id, reflogMsg)
+      })
+
     },
 
     checkout: function(args, opts) {
       if (opts.b) {
-        // TODO: if we passed opts._[0], create from that base
-        // otherwise default it to HEAD
-        this.branch([opts.b], {}, opts.b)
+        if (opts._[0]) {
+          this.branch(null, null, opts.b + ' ' + opts._[0])
+        } else {
+          this.branch(null, null, opts.b)
+        }
       }
 
       var name = opts.b || opts._[0]
