@@ -270,9 +270,11 @@ function(yargs) {
 
     checkout: function(args, opts) {
       if (opts.b) {
-        // TODO: if we passed opts._[0], create from that base
-        // otherwise default it to HEAD
-        this.branch([opts.b], {}, opts.b)
+        if (opts._[0]) {
+          this.branch(null, null, opts.b + ' ' + opts._[0])
+        } else {
+          this.branch(null, null, opts.b)
+        }
       }
 
       var name = opts.b || opts._[0]
