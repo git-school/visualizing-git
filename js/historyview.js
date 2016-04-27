@@ -924,7 +924,7 @@ define(['d3'], function() {
       return this;
     },
 
-    log: function(refspec) {
+    getLogEntries: function(refspec) {
       var ancestors = this.getAncestorSet(refspec)
       delete ancestors.initial
       ancestors[refspec] = -1
@@ -937,7 +937,7 @@ define(['d3'], function() {
       }).map(function(commitInfo) {
           var commit = commitInfo.commit
           return commit.id + ' ' + (commit.message || "(no message)")
-        }, this).join('\n')
+        }, this)
     },
 
     setProperty: function(refs, property) {

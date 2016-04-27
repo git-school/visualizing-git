@@ -202,8 +202,7 @@ function(yargs) {
       if (args.length > 1) {
         return this.error("'git log' can take at most one argument in this tool")
       }
-      var logs = this.historyView.log(args[0] || 'head')
-      logs = logs.replace(/\n/g, "<br>")
+      var logs = this.historyView.getLogEntries(args[0] || 'head').join('<br>')
       this.info(logs)
     },
 
