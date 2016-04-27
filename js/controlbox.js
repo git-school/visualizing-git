@@ -228,7 +228,6 @@ function(yargs) {
     },
 
     branch: function(args, options, cmdStr) {
-      console.log(cmdStr)
       options = yargs(cmdStr, {
         alias: { delete: ['d'], remote: ['r'], all: ['a'] },
         boolean: ['a', 'r']
@@ -254,7 +253,6 @@ function(yargs) {
 
       if (!branchName) {
         var branches = this.historyView.getBranchList().join('<br>')
-        console.log(branches);
         return this.info(branches)
       }
 
