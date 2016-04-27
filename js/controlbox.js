@@ -271,12 +271,14 @@ define(['d3'], function() {
             if (arg.charAt(0) === '-') {
               this.error();
             } else {
-              var remainingArgs = [arg].concat(args);
-              args.length = 0;
-              var branchName = remainingArgs.join(' ')
+              var branchName = arg
+              var startCommit = args.shift() || 'head'
+              if (args.length) {
+                // TODO: error handling if too many args?
+              }
 
               this.transact(function() {
-                this.historyView.branch(branchName);
+                this.historyView.branch(branchName, startCommit);
               }, function(before, after) {
                 var branchCommit = this.historyView.getCommit(branchName)
                 var reflogMsg = "branch: created from " + before.ref
