@@ -898,6 +898,11 @@ define(['d3'], function() {
       return this;
     },
 
+    log: function(ref) { // TODO: what should this be called?
+
+      return this
+    }
+
     setProperty: function(refs, property) {
       refs.forEach(function(ref) {
         this.getCommit(ref)[property] = true

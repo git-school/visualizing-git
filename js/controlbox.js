@@ -194,6 +194,13 @@ define(['d3'], function() {
       })
     },
 
+    log: function(args) {
+      if (args.length > 1) {
+        return this.error("'git log' can take at most one argument in this tool")
+      }
+      this.historyView.log(args)
+    },
+
     cherry_pick: function (args) {
       var mainline = null;
       var commits = [];
