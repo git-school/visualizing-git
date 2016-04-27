@@ -1220,14 +1220,14 @@ define(['d3'], function() {
         this.commit({
           parent2: mergeTarget.id,
           isNoFFCommit: true
-        });
+        }, 'merge');
       } else if (this.isAncestorOf(currentCommit.id, mergeTarget.id)) {
         this.fastForward(mergeTarget);
         return 'Fast-Forward';
       } else {
         this.commit({
           parent2: mergeTarget.id
-        });
+        }, 'merge');
       }
     },
 
