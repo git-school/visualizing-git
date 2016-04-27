@@ -898,7 +898,10 @@ define(['d3'], function() {
       !commit.id && (commit.id = HistoryView.generateId());
       !commit.tags && (commit.tags = []);
 
-      commit.message = message.replace(/^"(.*)"$/,"$1").replace(/^'(.*)'$/,"$1");
+      if (message) {
+        message = message.replace(/^"(.*)"$/,"$1").replace(/^'(.*)'$/,"$1")
+      }
+      commit.message = message
       if (!commit.parent) {
         commit.parent = this.getCommit('HEAD').id;
       }
@@ -918,10 +921,19 @@ define(['d3'], function() {
       return this;
     },
 
-    log: function(ref) { // TODO: what should this be called?
-
-      return this
-    }
+    log: function(refspec) {
+      var ancestors = this.getAncestorSet(refspec)
+      delete ancestors.initial
+      ancestors[refspec] = -1
+      return Object.keys(ancestors).map(function(commitId) {
+        return {commit: this.getCommit(commitId), order: ancestors[commitId]}
+      }, this).sort(function(a,b) {
+        return a.order - b.order
+      }).map(function(commitInfo) {
+          var commit = commitInfo.commit
+          return commit.id + ' ' + (commit.message || "(no message)")
+        }, this).join('\n')
+    },
 
     setProperty: function(refs, property) {
       refs.forEach(function(ref) {
