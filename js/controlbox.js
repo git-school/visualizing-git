@@ -213,20 +213,11 @@ function(CommandParser, yargs) {
       }, this)
     },
 
-    cherry_pick: function (args) {
-      var mainline = null;
-      var commits = [];
-      for (var i = 0; i < args.length; i++) {
-        var arg = args[i];
-        if (arg === '-m') {
-          mainline = args[i+1];
-          i++;
-        } else {
-          commits.push(arg);
-        }
-      }
+    cherry_pick: function (args, options) {
+      var mainline = options.m
+      var commits = options._
 
-      if (mainline !== null && !mainline.match(/^\d+$/)) {
+      if (mainline !== null && isNaN(mainline)) {
         this.error("switch 'm' expects a numerical value");
         return
       } else if (mainline) {
