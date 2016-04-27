@@ -1,4 +1,5 @@
-define(['d3'], function() {
+define(['command-parser', 'vendor/yargs-parser', 'd3'],
+function(CommandParser, yargs) {
   "use strict";
 
   /**
@@ -118,11 +119,14 @@ define(['d3'], function() {
       }
 
       var method = split[1].replace(/-/g, '_'),
-        args = split.slice(2);
+        args = split.slice(2),
+        argsStr = args.join(' ')
+
+      var options = yargs(argsStr)
 
       try {
         if (typeof this[method] === 'function') {
-          this[method](args);
+          this[method](args, options, argsStr);
         } else {
           this.error();
         }
