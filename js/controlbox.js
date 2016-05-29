@@ -219,17 +219,17 @@ function(_yargs) {
 
     cherry_pick: function (args, opt, cmdStr) {
       opt = yargs(cmdStr, {
-        alias: { mainline: ['m'] }
+        number: ['m']
       })
 
-      if (opt.mainline !== undefined && isNaN(opt.mainline)) {
+      if (opt.m !== undefined && isNaN(opt.m)) {
         this.error("switch 'm' expects a numerical value");
         return
       }
 
       // FIXME: because `cherryPick` is asynchronous,
       // it is responsible for its own reflog entries
-      this.historyView.cherryPick(opt._, opt.mainline);
+      this.historyView.cherryPick(opt._, opt.m);
     },
 
     branch: function(args, options, cmdStr) {
