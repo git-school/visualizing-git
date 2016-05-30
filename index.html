@@ -249,33 +249,29 @@ require(['explaingit'], function (explainGit) {
         }
     };
 
-    // window.addEventListener('hashchange', open, false);
-    // window.addEventListener('load', open, false);
+    function ready(fn) {
+      if (document.readyState != 'loading'){
+        fn();
+      } else {
+        document.addEventListener('DOMContentLoaded', fn);
+      }
+    }
 
-    // function open() {
-    //     var hash = window.location.hash.substr(1),
-    //         linkId = 'open-' + hash,
-    //         example = examples[hash];
-    //
-    //         var elements = document.getElementsByClassName('row');
-    //         for(var i = 0; i != elements.length; ++i)
-    //         {
-    //           elements[i].style.display = 'none';
-    //         }
-    //         document.getElementById('fork-me').style.display = 'none';
+    ready(open)
 
-            explainGit.reset();
+    function open() {
+      explainGit.reset();
 
-            explainGit.open({
-                name: 'Zen',
-                height: '100%',
-                commitData: [
-                    {id: 'e137e9b', tags: ['master'], message: 'first commit'}
-                ],
-                initialMessage:
-                    'Have fun.'
-            });
-    // }
+      explainGit.open({
+          name: 'Zen',
+          height: '100%',
+          commitData: [
+              {id: 'e137e9b', tags: ['master'], message: 'first commit'}
+          ],
+          initialMessage:
+              'Have fun.'
+      });
+    }
 });
 </script>
 </body>
