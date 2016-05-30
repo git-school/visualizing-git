@@ -317,25 +317,25 @@ function(_yargs) {
       }
     },
 
+    doReset: function (name) {
+      this.transact(function() {
+        this.historyView.reset(name);
+      }, function(before, after) {
+        var reflogMsg = "reset: moving to " + name
+        this.historyView.addReflogEntry(
+          'HEAD', after.commit.id, reflogMsg
+        )
+        if (before.branch) {
+          this.historyView.addReflogEntry(
+            before.branch, after.commit.id, reflogMsg
+          )
+        }
+      })
+    },
+
     reset: function(args) {
       while (args.length > 0) {
         var arg = args.shift();
-
-        function doReset (name) {
-          this.transact(function() {
-            this.historyView.reset(name);
-          }, function(before, after) {
-            var reflogMsg = "reset: moving to " + name
-            this.historyView.addReflogEntry(
-              'HEAD', after.commit.id, reflogMsg
-            )
-            if (before.branch) {
-              this.historyView.addReflogEntry(
-                before.branch, after.commit.id, reflogMsg
-              )
-            }
-          })
-        }
 
         switch (arg) {
           case '--soft':
@@ -353,14 +353,14 @@ function(_yargs) {
             );
             break;
           case '--hard':
-            doReset.call(this, args.join(' '));
+            this.doReset(args.join(' '));
             args.length = 0;
             break;
           default:
             var remainingArgs = [arg].concat(args);
             args.length = 0;
             this.info('Assuming "--hard".');
-            doReset.call(this, remainingArgs.join(' '));
+            this.doReset(remainingArgs.join(' '));
         }
       }
     },
