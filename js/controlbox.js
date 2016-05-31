@@ -186,7 +186,8 @@ function(_yargs) {
       var msg = ""
       this.transact(function() {
         if (opts.amend) {
-          this.historyView.amendCommit(opts.m)
+          var lastCommitMessage = this.historyView.commitData[this.historyView.commitData.length - 1].message
+          this.historyView.amendCommit(opts.m || lastCommitMessage)
         } else {
           this.historyView.commit(null, opts.m);
         }
