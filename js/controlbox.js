@@ -113,7 +113,7 @@ function(_yargs) {
     },
 
     command: function(entry) {
-      if (entry.trim === '') {
+      if (entry.trim() === '') {
         return;
       }
 
