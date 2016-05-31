@@ -248,7 +248,7 @@ define(['d3'], function() {
     this.name = config.name || 'UnnamedHistoryView';
     this.commitData = commitData;
 
-    this.branches = [];
+    this.branches = ['master'];
     this.currentBranch = config.currentBranch || 'master';
 
     this.width = config.width;
@@ -360,6 +360,7 @@ define(['d3'], function() {
 
           if (nextToken === '^') {
             if (amount === 0) {
+              console.log('the answer should be', matchedCommit)
               /* do nothing, refers to this commit */
             } else if (amount === 1) {
               matchedCommit = this.getCommit(matchedCommit.parent)
@@ -1158,10 +1159,8 @@ define(['d3'], function() {
         previousHead.classed('checked-out', false);
       }
 
-      var startsWithCommit = commit.id.indexOf(ref) === 0
-      var startsWithHead = ref.toLowerCase().indexOf('head') === 0
-      var isTag = this.branches.indexOf('[' + ref + ']') !== -1
-      this._setCurrentBranch(startsWithCommit || startsWithHead || isTag ? null : ref);
+      var isBranch = this.branches.indexOf(ref) !== -1
+      this._setCurrentBranch(isBranch ? ref : null);
       this.moveTag('HEAD', commit.id);
       this.renderTags();
 
