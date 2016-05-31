@@ -1160,7 +1160,8 @@ define(['d3'], function() {
 
       var startsWithCommit = commit.id.indexOf(ref) === 0
       var startsWithHead = ref.toLowerCase().indexOf('head') === 0
-      this._setCurrentBranch(startsWithCommit || startsWithHead ? null : ref);
+      var isTag = this.branches.indexOf('[' + ref + ']') !== -1
+      this._setCurrentBranch(startsWithCommit || startsWithHead || isTag ? null : ref);
       this.moveTag('HEAD', commit.id);
       this.renderTags();
 
