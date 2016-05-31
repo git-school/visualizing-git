@@ -25,6 +25,13 @@ function(_yargs) {
     this._currentCommand = -1;
     this._tempCommand = '';
     this.rebaseConfig = {}; // to configure branches for rebase
+
+    this.undoStacks = {
+      hv: [this.historyView.serialize()]
+    }
+    this.undoPointers = {
+      hv: 0
+    }
   }
 
   ControlBox.prototype = {
@@ -117,6 +124,30 @@ function(_yargs) {
         return;
       }
 
+      if (entry.trim() === 'undo') {
+        var lastId = this.undoPointers.hv - 1
+        var lastState = this.undoStacks.hv[lastId]
+        if (lastState) {
+          this.historyView.deserialize(lastState)
+          this.undoPointers.hv = lastId
+        } else {
+          this.error("Nothing to undo")
+        }
+        return
+      }
+
+      if (entry.trim() === 'redo') {
+        var lastId = this.undoPointers.hv + 1
+        var lastState = this.undoStacks.hv[lastId]
+        if (lastState) {
+          this.historyView.deserialize(lastState)
+          this.undoPointers.hv = lastId
+        } else {
+          this.error("Nothing to redo")
+        }
+        return
+      }
+
       var split = entry.split(' ');
 
       this.terminalOutput.append('div')
@@ -137,7 +168,13 @@ function(_yargs) {
 
       try {
         if (typeof this[method] === 'function') {
+
           this[method](args, options, argsStr);
+
+          var state = this.historyView.serialize()
+          this.undoPointers.hv++
+          this.undoStacks.hv.length = this.undoPointers.hv
+          this.undoStacks.hv.push(state)
         } else {
           this.error();
         }

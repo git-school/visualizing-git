@@ -277,6 +277,27 @@ define(['d3'], function() {
   };
 
   HistoryView.prototype = {
+    serialize: function () {
+      var data = {
+        commitData: this.commitData,
+        branches: this.branches,
+        logs: this.logs,
+        currentBranch: this.currentBranch,
+      }
+
+      return JSON.stringify(data)
+    },
+
+    deserialize: function (data) {
+      data = JSON.parse(data)
+      this.commitData = data.commitData
+      this.branches = data.branches
+      this.logs = data.logs
+      this.currentBranch = data.currentBranch
+      this.renderCommits()
+      this.renderTags()
+    },
+
     /**
      * @method getCommit
      * @param ref {String} the id or a tag name that refers to the commit
@@ -581,7 +602,10 @@ define(['d3'], function() {
         .attr('r', 1)
         .transition("inflate")
         .duration(500)
-        .attr('r', this.commitRadius);
+        .attr('r', this.commitRadius)
+
+      existingCircles.exit()
+        .remove()
 
     },
 
@@ -620,6 +644,9 @@ define(['d3'], function() {
         .transition()
         .duration(500)
         .call(fixPointerEndPosition, view);
+
+      existingPointers.exit()
+        .remove()
     },
 
     _renderMergePointers: function() {
@@ -674,6 +701,9 @@ define(['d3'], function() {
           points[1] = x2 + ',' + y2;
           return points.join(' ');
         });
+
+      existingPointers.exit()
+        .remove()
     },
 
     _renderIdLabels: function() {
@@ -703,6 +733,9 @@ define(['d3'], function() {
         .classed(className, true)
         .text(getText)
         .call(fixIdPosition, view, delta);
+
+      existingTexts.exit()
+        .remove()
     },
 
     _parseTagData: function() {
@@ -856,6 +889,9 @@ define(['d3'], function() {
           var commit = view.getCommit(d.commit);
           return commit.cx;
         });
+
+      existingTags.exit()
+        .remove()
 
       this._markBranchlessCommits();
     },
@@ -1363,6 +1399,7 @@ define(['d3'], function() {
             if (origBranch) {
               this.moveTag(origBranch, newHeadCommit.id)
               this.reset(origBranch)
+              this._setCurrentBranch(origBranch)
               this.addReflogEntry(
                 'HEAD', targetCommit.id, 'rebase finished: returning to resf/heads/' + origBranch
               )
