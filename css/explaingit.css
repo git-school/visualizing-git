@@ -194,12 +194,12 @@ circle.commit.merge-commit.checked-out {
 }
 
 circle.commit.reverted {
-  fill: #FFC;
-  stroke: #933;
+  fill: #CCEEFF;
+  stroke: #0066CC;
 }
 
 circle.commit.reverted.checked-out {
-  fill: #FFC;
+  fill: #CCEEFF;
 }
 
 circle.commit.rebased {

@@ -222,6 +222,11 @@ function(_yargs) {
         number: ['m']
       })
 
+      if (!opt._.length) {
+        this.error('You must specify one or more commits to cherry-pick');
+        return
+      }
+
       if (opt.m !== undefined && isNaN(opt.m)) {
         this.error("switch 'm' expects a numerical value");
         return
@@ -369,14 +374,23 @@ function(_yargs) {
       this.info('Deleting all of your untracked files...');
     },
 
-    revert: function(args) {
-      if(args.length === 0) {
+    revert: function(args, opt, cmdStr) {
+      opt = yargs(cmdStr, {
+        number: ['m']
+      })
+
+      if (!opt._.length) {
         this.error('You must specify a commit to revert');
         return
       }
 
+      if (opt.m !== undefined && isNaN(opt.m)) {
+        this.error("switch 'm' expects a numerical value");
+        return
+      }
+
       this.transact(function() {
-        this.historyView.revert(args.shift());
+        this.historyView.revert(opt._, opt.m);
       }, function(before, after) {
         var reflogMsg = 'revert: ' + before.commit.message || before.commit.id
         this.historyView.addReflogEntry(

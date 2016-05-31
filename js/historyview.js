@@ -546,7 +546,7 @@ define(['d3'], function() {
           return view.name + '-' + d.id;
         })
         .classed('reverted', function(d) {
-          return d.reverted;
+          return d.reverted || d.revertSource;
         })
         .classed('rebased', function(d) {
           return d.rebased || d.rebaseSource;
@@ -1018,7 +1018,7 @@ define(['d3'], function() {
         refs.forEach(function(ref) {
           var commit = this.getCommit(ref)
           var message = commit.message || ""
-          var cherryPickSource = this.getCherryPickSource(commit.id, mainline)
+          var cherryPickSource = this.getNonMainlineCommits(commit.id, mainline)
 
           this.flashProperty(cherryPickSource, 'cherryPicked', function() {
             this.commit({cherryPickSource: cherryPickSource}, message)
@@ -1036,7 +1036,7 @@ define(['d3'], function() {
       }
     },
 
-    getCherryPickSource: function(ref, mainline) {
+    getNonMainlineCommits: function(ref, mainline) {
       if (mainline === 1) mainline = 2
       else if (mainline === 2) mainline = 1
       else throw new Error("Mainline " + mainline + " isn't supported")
@@ -1196,20 +1196,74 @@ define(['d3'], function() {
       return this;
     },
 
-    revert: function(ref) {
-      var commit = this.getCommit(ref);
+    revert: function(refs, mainline) {
+      refs.forEach(function(ref) {
+        if (!this.getCommit(ref)) {
+          throw new Error("fatal: bad revision '" + ref + "'")
+          return
+        }
+      }, this)
 
-      if (!commit) {
-        throw new Error('Cannot find ref: ' + ref);
+      if (mainline) {
+        if (mainline > 2 || mainline < 1) {
+          throw new Error("Commit " + refs[0] + " does not have parent " + mainline)
+          return
+        }
+        var nonMergeRefs = refs.filter(function(ref) {
+          var commit = this.getCommit(ref)
+          return !commit.parent || !commit.parent2
+        }, this)
+
+        if (nonMergeRefs.length) {
+          throw new Error('mainline specified but ' + nonMergeRefs[0] + ' is not a merge')
+        }
+      } else {
+        var mergeRefs = refs.filter(function(ref) {
+          var commit = this.getCommit(ref)
+          return commit.parent && commit.parent2
+        }, this)
+
+        if (mergeRefs.length) {
+          throw new Error('cannot revert merge commit ' + mergeRefs[0] + ' without specifying a mainline with -m')
+        }
       }
 
-      if (this.isAncestorOf(commit, 'HEAD')) {
-        commit.reverted = true;
-        this.commit({
-          reverts: commit.id
-        }, "Revert " + commit.id);
+      if (!mainline) {
+        refs.forEach(function(ref) {
+          var commit = this.getCommit(ref)
+          var message = commit.message || ""
+          this.flashProperty([commit.id], 'reverted', function() {
+            this.commit({revertSource: [commit.id]}, "Revert " + commit.id)
+            var reflogMessage = "revert: " + message
+            this.addReflogEntry(
+              'HEAD', this.getCommit('HEAD').id, reflogMessage
+            )
+            if (this.currentBranch) {
+              this.addReflogEntry(
+                this.currentBranch, this.getCommit('HEAD').id, reflogMessage
+              )
+            }
+          })
+        }, this)
       } else {
-        throw new Error(ref + 'is not an ancestor of HEAD.');
+        refs.forEach(function(ref) {
+          var commit = this.getCommit(ref)
+          var message = commit.message || ""
+          var revertSource = this.getNonMainlineCommits(commit.id, mainline)
+
+          this.flashProperty(revertSource, 'reverted', function() {
+            this.commit({revertSource: revertSource}, "Revert " + commit.id)
+            var reflogMessage = "revert: " + message
+            this.addReflogEntry(
+              'HEAD', this.getCommit('HEAD').id, reflogMessage
+            )
+            if (this.currentBranch) {
+              this.addReflogEntry(
+                this.currentBranch, this.getCommit('HEAD').id, reflogMessage
+              )
+            }
+          })
+        }, this)
       }
     },
 
@@ -1262,14 +1316,14 @@ define(['d3'], function() {
         this.commit({
           parent2: mergeTarget.id,
           isNoFFCommit: true
-        }, 'merge');
+        }, 'Merge');
       } else if (this.isAncestorOf(currentCommit.id, mergeTarget.id)) {
         this.fastForward(mergeTarget);
         return 'Fast-Forward';
       } else {
         this.commit({
           parent2: mergeTarget.id
-        }, 'merge');
+        }, 'Merge');
       }
     },
 
