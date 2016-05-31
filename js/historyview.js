@@ -360,7 +360,6 @@ define(['d3'], function() {
 
           if (nextToken === '^') {
             if (amount === 0) {
-              console.log('the answer should be', matchedCommit)
               /* do nothing, refers to this commit */
             } else if (amount === 1) {
               matchedCommit = this.getCommit(matchedCommit.parent)
