@@ -189,13 +189,25 @@ circle.commit.merge-commit {
   fill: #FFFFCC;
 }
 
+circle.commit.merge-commit.checked-out {
+  fill: #FFFFCC;
+}
+
 circle.commit.reverted {
   fill: #FFC;
   stroke: #933;
 }
 
+circle.commit.reverted.checked-out {
+  fill: #FFC;
+}
+
 circle.commit.rebased {
   stroke: #3300CC;
+  fill: #CCCCFF;
+}
+
+circle.commit.rebased.checked-out {
   fill: #CCCCFF;
 }
 
@@ -204,14 +216,22 @@ circle.commit.cherry-picked {
   fill: #FFEEEE;
 }
 
-circle.commit.checked-out {
-  fill: #CCFFCC;
-  stroke: #339900;
+circle.commit.cherry-picked.checked-out {
+  fill: #FFEEEE;
 }
 
 circle.commit.branchless {
   fill: #FEFEFE;
   stroke: #DDD;
+}
+
+circle.commit.branchless.checked-out {
+  fill: #FEFEFE;
+}
+
+circle.commit.checked-out {
+  fill: #CCFFCC;
+  stroke: #339900;
 }
 
 circle.commit.logging {
