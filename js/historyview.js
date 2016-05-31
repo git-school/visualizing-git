@@ -290,6 +290,17 @@ define(['d3'], function() {
       var commitData = this.commitData,
         matchedCommit = null;
 
+      var reflogMatch
+      if (reflogMatch = ref.match(/^(.*)@\{(\d+)\}(.*)$/)) {
+        var branchName = reflogMatch[1].toLowerCase()
+        var count = parseInt(reflogMatch[2], 10)
+        var rest = reflogMatch[3]
+
+        if (this.logs[branchName] && this.logs[branchName][count]) {
+          ref = this.logs[branchName][count].destination + rest
+        }
+      }
+
       var parts = /^([^\^\~]+)(.*)$/.exec(ref),
         ref = parts[1],
         modifier = parts[2];
@@ -308,7 +319,7 @@ define(['d3'], function() {
         })
 
       if (commitsThatStartWith.length === 1) {
-        return commitsThatStartWith[0]
+        matchedCommit = commitsThatStartWith[0]
       } else if (commitsThatStartWith.length > 1) {
         throw new Error("Ref " + ref + " is ambiguous")
       }
