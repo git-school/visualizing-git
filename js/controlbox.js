@@ -197,9 +197,7 @@ function(_yargs) {
 
       try {
         if (typeof this[method] === 'function') {
-
           this[method](args, options, argsStr);
-
           this.createUndoSnapshot()
         } else {
           this.error();
