@@ -270,6 +270,9 @@ define(['d3'], function() {
       cx: -(this.commitRadius * 2),
       cy: this.baseLine
     };
+
+    this.locks = 0
+    this._eventCallbacks = {}
   }
 
   HistoryView.generateId = function() {
@@ -296,6 +299,50 @@ define(['d3'], function() {
       this.currentBranch = data.currentBranch
       this.renderCommits()
       this.renderTags()
+    },
+
+    emit: function (event) {
+      var callbacks = this._eventCallbacks[event] || []
+      callbacks.forEach(function(callback) {
+        try {
+          callback(event)
+        } finally {
+          // nothing
+        }
+      })
+    },
+
+    on: function (event, callback) {
+      var callbacks = this._eventCallbacks[event] || []
+      callbacks.push(callback)
+      this._eventCallbacks[event] = callbacks
+
+      return function () {
+        var cbs = this._eventCallbacks[event] || []
+        var idx = cbs.indexOf(callback)
+        if (idx > -1) {
+          cbs.splice(idx, 1)
+          this._eventCallbacks[event] = cbs
+        }
+      }.bind(this)
+    },
+
+    lock: function () {
+      this.locks++
+      if (this.locks === 1) {
+        this.emit('lock')
+      }
+    },
+
+    unlock: function () {
+      if (this.locks <= 0) {
+        throw new Error('cannot unlock! not locked')
+      }
+
+      this.locks--
+      if (this.locks === 0) {
+        this.emit('unlock')
+      }
     },
 
     /**
@@ -977,7 +1024,10 @@ define(['d3'], function() {
       delete ancestors.initial
       ancestors[refspec] = -1
       var commitIds = Object.keys(ancestors)
-      this.flashProperty(commitIds, 'logging')
+      this.lock()
+      this.flashProperty(commitIds, 'logging', function () {
+        this.unlock()
+      })
       return commitIds.map(function(commitId) {
         return {commit: this.getCommit(commitId), order: ancestors[commitId]}
       }, this).sort(function(a,b) {
@@ -1037,6 +1087,7 @@ define(['d3'], function() {
         refs.forEach(function(ref) {
           var commit = this.getCommit(ref)
           var message = commit.message || ""
+          this.lock()
           this.flashProperty([commit.id], 'cherryPicked', function() {
             this.commit({cherryPickSource: [commit.id]}, message)
             var reflogMessage = "cherry-pick: " + message
@@ -1048,6 +1099,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
+            this.unlock()
           })
         }, this)
       } else {
@@ -1056,6 +1108,7 @@ define(['d3'], function() {
           var message = commit.message || ""
           var cherryPickSource = this.getNonMainlineCommits(commit.id, mainline)
 
+          this.lock()
           this.flashProperty(cherryPickSource, 'cherryPicked', function() {
             this.commit({cherryPickSource: cherryPickSource}, message)
             var reflogMessage = "cherry-pick: " + message
@@ -1067,6 +1120,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
+            this.unlock()
           })
         }, this)
       }
@@ -1268,6 +1322,7 @@ define(['d3'], function() {
         refs.forEach(function(ref) {
           var commit = this.getCommit(ref)
           var message = commit.message || ""
+          this.lock()
           this.flashProperty([commit.id], 'reverted', function() {
             this.commit({revertSource: [commit.id]}, "Revert " + commit.id)
             var reflogMessage = "revert: " + message
@@ -1279,6 +1334,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
+            this.unlock()
           })
         }, this)
       } else {
@@ -1287,6 +1343,7 @@ define(['d3'], function() {
           var message = commit.message || ""
           var revertSource = this.getNonMainlineCommits(commit.id, mainline)
 
+          this.lock()
           this.flashProperty(revertSource, 'reverted', function() {
             this.commit({revertSource: revertSource}, "Revert " + commit.id)
             var reflogMessage = "revert: " + message
@@ -1298,6 +1355,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
+            this.unlock()
           })
         }, this)
       }
@@ -1388,6 +1446,7 @@ define(['d3'], function() {
               return uniqueAncestors[key2] - uniqueAncestors[key1]
             })
 
+      this.lock()
       setTimeout(function() {
         this.flashProperty(commitsToCopy, 'rebased', function() {
           commitsToCopy.forEach(function(ref) {
@@ -1409,6 +1468,7 @@ define(['d3'], function() {
               )
             }
             this.unsetProperty(commitsToCopy, 'rebased')
+            this.unlock()
           }.bind(this), 1000)
         })
       }.bind(this), 1000)

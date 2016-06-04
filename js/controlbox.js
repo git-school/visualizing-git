@@ -32,9 +32,33 @@ function(_yargs) {
     this.undoPointers = {
       hv: 0
     }
+
+    this.historyView.on('lock', this.lock.bind(this))
+    this.historyView.on('unlock', this.unlock.bind(this))
   }
 
   ControlBox.prototype = {
+    lock: function () {
+      this.locked = true
+    },
+
+    unlock: function () {
+      this.locked = false
+      this.createUndoSnapshot(true)
+    },
+
+    createUndoSnapshot: function (replace) {
+      var state = this.historyView.serialize()
+      if (!replace) {
+        this.undoPointers.hv++
+        this.undoStacks.hv.length = this.undoPointers.hv
+        this.undoStacks.hv.push(state)
+      } else {
+        var len = this.undoStacks.hv.length
+        this.undoStacks.hv[len - 1] = state
+      }
+    },
+
     render: function(container) {
       var cBox = this,
         cBoxContainer, log, input;
@@ -55,8 +79,8 @@ function(_yargs) {
 
         switch (e.keyCode) {
           case 13:
-            if (this.value.trim() === '') {
-              break;
+            if (this.value.trim() === '' || cBox.locked) {
+              return;
             }
 
             cBox._commandHistory.unshift(this.value);
@@ -124,7 +148,7 @@ function(_yargs) {
         return;
       }
 
-      if (entry.trim() === 'undo') {
+      if (entry.trim().toLowerCase() === 'undo') {
         var lastId = this.undoPointers.hv - 1
         var lastState = this.undoStacks.hv[lastId]
         if (lastState) {
@@ -133,10 +157,13 @@ function(_yargs) {
         } else {
           this.error("Nothing to undo")
         }
+        this.terminalOutput.append('div')
+          .classed('command-entry', true)
+          .html(entry);
         return
       }
 
-      if (entry.trim() === 'redo') {
+      if (entry.trim().toLowerCase() === 'redo') {
         var lastId = this.undoPointers.hv + 1
         var lastState = this.undoStacks.hv[lastId]
         if (lastState) {
@@ -145,6 +172,9 @@ function(_yargs) {
         } else {
           this.error("Nothing to redo")
         }
+        this.terminalOutput.append('div')
+          .classed('command-entry', true)
+          .html(entry);
         return
       }
 
@@ -171,10 +201,7 @@ function(_yargs) {
 
           this[method](args, options, argsStr);
 
-          var state = this.historyView.serialize()
-          this.undoPointers.hv++
-          this.undoStacks.hv.length = this.undoPointers.hv
-          this.undoStacks.hv.push(state)
+          this.createUndoSnapshot()
         } else {
           this.error();
         }
@@ -575,6 +602,7 @@ function(_yargs) {
         throw new Error('Current branch is not set up for pulling.');
       }
 
+      this.lock()
       setTimeout(function() {
         try {
           if (args[0] === '--rebase' || control.rebaseConfig[currentBranch] === 'true') {
@@ -584,6 +612,8 @@ function(_yargs) {
           }
         } catch (error) {
           control.error(error.message);
+        } finally {
+          this.unlock()
         }
 
         if (isFastForward) {
