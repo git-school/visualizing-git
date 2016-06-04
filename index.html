@@ -264,34 +264,23 @@ require(['explaingit'], function (explainGit) {
 
       var savedState = null
       if (window.localStorage) {
-        savedState = window.localStorage.getItem('git-viz-snapshot')
+        savedState = JSON.parse(window.localStorage.getItem('git-viz-snapshot') || 'null')
       }
 
-      var initial = null
-      if (savedState) {
-        savedState = JSON.parse(savedState)
-        var serialized = savedState.stack[savedState.pointer].hv
-        initial = {
-          name: 'Zen',
-          height: '100%',
-          initialMessage: 'Have fun.',
-          commitData: [
-              {id: 'e137e9b', tags: ['master'], message: 'first commit'}
-          ],
-          undoHistory: savedState,
-          savedState: serialized
-        }
-      } else {
-        initial = {
-            name: 'Zen',
-            height: '100%',
-            commitData: [
-                {id: 'e137e9b', tags: ['master'], message: 'first commit'}
-            ],
-            initialMessage:
-                'Have fun.'
-        }
+      var initial = {
+        name: 'Zen',
+        height: '100%',
+        initialMessage: 'Have fun.',
+        commitData: [
+            {id: 'e137e9b', tags: ['master'], message: 'first commit'}
+        ],
+        originData: [
+            {id: 'e137e9b', tags: ['master'], message: 'first commit'}
+        ],
+        undoHistory: savedState,
+        savedState: savedState && savedState.stack[savedState.pointer].hv
       }
+      
       explainGit.open(initial);
     }
 
