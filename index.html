@@ -262,15 +262,46 @@ require(['explaingit'], function (explainGit) {
     function open() {
       explainGit.reset();
 
-      explainGit.open({
+      var savedState = null
+      if (window.localStorage) {
+        savedState = window.localStorage.getItem('git-viz-snapshot')
+      }
+
+      var initial = null
+      if (savedState) {
+        savedState = JSON.parse(savedState)
+        var serialized = savedState.stack[savedState.pointer].hv
+        initial = {
           name: 'Zen',
           height: '100%',
+          initialMessage: 'Have fun.',
           commitData: [
               {id: 'e137e9b', tags: ['master'], message: 'first commit'}
           ],
-          initialMessage:
-              'Have fun.'
-      });
+          undoHistory: savedState,
+          savedState: serialized
+        }
+      } else {
+        initial = {
+            name: 'Zen',
+            height: '100%',
+            commitData: [
+                {id: 'e137e9b', tags: ['master'], message: 'first commit'}
+            ],
+            initialMessage:
+                'Have fun.'
+        }
+      }
+      explainGit.open(initial);
+    }
+
+    window.resetVis = function () {
+      if (confirm('This will reset your visualization. Are you sure?')) {
+        if (window.localStorage) {
+          window.localStorage.removeItem('git-viz-snapshot')
+        }
+        open()
+      }
     }
 });
 </script>

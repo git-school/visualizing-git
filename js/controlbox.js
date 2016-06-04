@@ -26,7 +26,7 @@ function(_yargs) {
     this._tempCommand = '';
     this.rebaseConfig = {}; // to configure branches for rebase
 
-    this.undoHistory = {
+    this.undoHistory = config.undoHistory || {
       pointer: 0,
       stack: [
         { hv: this.historyView.serialize() }
@@ -55,6 +55,14 @@ function(_yargs) {
         this.undoHistory.stack.push({ hv: state })
       } else {
         this.undoHistory.stack[this.undoHistory.pointer] = { hv: state }
+      }
+
+      this.persist()
+    },
+
+    persist: function () {
+      if (window.localStorage) {
+        window.localStorage.setItem('git-viz-snapshot', JSON.stringify(this.undoHistory))
       }
     },
 
@@ -156,6 +164,7 @@ function(_yargs) {
         } else {
           this.error("Nothing to undo")
         }
+        this.persist()
         this.terminalOutput.append('div')
           .classed('command-entry', true)
           .html(entry);
@@ -171,9 +180,15 @@ function(_yargs) {
         } else {
           this.error("Nothing to redo")
         }
+        this.persist()
         this.terminalOutput.append('div')
           .classed('command-entry', true)
           .html(entry);
+        return
+      }
+
+      if (entry.trim().toLowerCase() === 'clear') {
+        window.resetVis()
         return
       }
 

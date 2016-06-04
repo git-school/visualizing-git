@@ -273,6 +273,12 @@ define(['d3'], function() {
 
     this.locks = 0
     this._eventCallbacks = {}
+
+    if (config.savedState) {
+      setTimeout(function() {
+        this.deserialize(config.savedState)
+      }.bind(this))
+    }
   }
 
   HistoryView.generateId = function() {
