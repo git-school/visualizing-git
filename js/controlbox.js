@@ -25,9 +25,47 @@ function(_yargs) {
     this._currentCommand = -1;
     this._tempCommand = '';
     this.rebaseConfig = {}; // to configure branches for rebase
+
+    this.undoHistory = config.undoHistory || {
+      pointer: 0,
+      stack: [
+        { hv: this.historyView.serialize() }
+      ]
+    }
+
+    this.historyView.on('lock', this.lock.bind(this))
+    this.historyView.on('unlock', this.unlock.bind(this))
   }
 
   ControlBox.prototype = {
+    lock: function () {
+      this.locked = true
+    },
+
+    unlock: function () {
+      this.locked = false
+      this.createUndoSnapshot(true)
+    },
+
+    createUndoSnapshot: function (replace) {
+      var state = this.historyView.serialize()
+      if (!replace) {
+        this.undoHistory.pointer++
+        this.undoHistory.stack.length = this.undoHistory.pointer
+        this.undoHistory.stack.push({ hv: state })
+      } else {
+        this.undoHistory.stack[this.undoHistory.pointer] = { hv: state }
+      }
+
+      this.persist()
+    },
+
+    persist: function () {
+      if (window.localStorage) {
+        window.localStorage.setItem('git-viz-snapshot', JSON.stringify(this.undoHistory))
+      }
+    },
+
     render: function(container) {
       var cBox = this,
         cBoxContainer, log, input;
@@ -48,8 +86,8 @@ function(_yargs) {
 
         switch (e.keyCode) {
           case 13:
-            if (this.value.trim() === '') {
-              break;
+            if (this.value.trim() === '' || cBox.locked) {
+              return;
             }
 
             cBox._commandHistory.unshift(this.value);
@@ -117,6 +155,43 @@ function(_yargs) {
         return;
       }
 
+      if (entry.trim().toLowerCase() === 'undo') {
+        var lastId = this.undoHistory.pointer - 1
+        var lastState = this.undoHistory.stack[lastId]
+        if (lastState) {
+          this.historyView.deserialize(lastState.hv)
+          this.undoHistory.pointer = lastId
+        } else {
+          this.error("Nothing to undo")
+        }
+        this.persist()
+        this.terminalOutput.append('div')
+          .classed('command-entry', true)
+          .html(entry);
+        return
+      }
+
+      if (entry.trim().toLowerCase() === 'redo') {
+        var lastId = this.undoHistory.pointer + 1
+        var lastState = this.undoHistory.stack[lastId]
+        if (lastState) {
+          this.historyView.deserialize(lastState.hv)
+          this.undoHistory.pointer = lastId
+        } else {
+          this.error("Nothing to redo")
+        }
+        this.persist()
+        this.terminalOutput.append('div')
+          .classed('command-entry', true)
+          .html(entry);
+        return
+      }
+
+      if (entry.trim().toLowerCase() === 'clear') {
+        window.resetVis()
+        return
+      }
+
       var split = entry.split(' ');
 
       this.terminalOutput.append('div')
@@ -138,6 +213,7 @@ function(_yargs) {
       try {
         if (typeof this[method] === 'function') {
           this[method](args, options, argsStr);
+          this.createUndoSnapshot()
         } else {
           this.error();
         }
@@ -538,6 +614,7 @@ function(_yargs) {
         throw new Error('Current branch is not set up for pulling.');
       }
 
+      this.lock()
       setTimeout(function() {
         try {
           if (args[0] === '--rebase' || control.rebaseConfig[currentBranch] === 'true') {
@@ -547,6 +624,8 @@ function(_yargs) {
           }
         } catch (error) {
           control.error(error.message);
+        } finally {
+          this.unlock()
         }
 
         if (isFastForward) {

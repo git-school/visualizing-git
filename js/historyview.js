@@ -270,6 +270,15 @@ define(['d3'], function() {
       cx: -(this.commitRadius * 2),
       cy: this.baseLine
     };
+
+    this.locks = 0
+    this._eventCallbacks = {}
+
+    if (config.savedState) {
+      setTimeout(function() {
+        this.deserialize(config.savedState)
+      }.bind(this))
+    }
   }
 
   HistoryView.generateId = function() {
@@ -277,6 +286,71 @@ define(['d3'], function() {
   };
 
   HistoryView.prototype = {
+    serialize: function () {
+      var data = {
+        commitData: this.commitData,
+        branches: this.branches,
+        logs: this.logs,
+        currentBranch: this.currentBranch,
+      }
+
+      return JSON.stringify(data)
+    },
+
+    deserialize: function (data) {
+      data = JSON.parse(data)
+      this.commitData = data.commitData
+      this.branches = data.branches
+      this.logs = data.logs
+      this.currentBranch = data.currentBranch
+      this.renderCommits()
+      this.renderTags()
+    },
+
+    emit: function (event) {
+      var callbacks = this._eventCallbacks[event] || []
+      callbacks.forEach(function(callback) {
+        try {
+          callback(event)
+        } finally {
+          // nothing
+        }
+      })
+    },
+
+    on: function (event, callback) {
+      var callbacks = this._eventCallbacks[event] || []
+      callbacks.push(callback)
+      this._eventCallbacks[event] = callbacks
+
+      return function () {
+        var cbs = this._eventCallbacks[event] || []
+        var idx = cbs.indexOf(callback)
+        if (idx > -1) {
+          cbs.splice(idx, 1)
+          this._eventCallbacks[event] = cbs
+        }
+      }.bind(this)
+    },
+
+    lock: function () {
+      this.locks++
+      if (this.locks === 1) {
+        this.emit('lock')
+      }
+    },
+
+    unlock: function () {
+      if (this.locks <= 0) {
+        throw new Error('cannot unlock! not locked')
+      }
+
+      this.locks--
+      if (this.locks === 0) {
+        this.emit('unlock')
+      }
+    },
+
     /**
      * @method getCommit
      * @param ref {String} the id or a tag name that refers to the commit
@@ -581,7 +655,10 @@ define(['d3'], function() {
         .attr('r', 1)
         .transition("inflate")
         .duration(500)
-        .attr('r', this.commitRadius);
+        .attr('r', this.commitRadius)
+
+      existingCircles.exit()
+        .remove()
 
     },
 
@@ -620,6 +697,9 @@ define(['d3'], function() {
         .transition()
         .duration(500)
         .call(fixPointerEndPosition, view);
+
+      existingPointers.exit()
+        .remove()
     },
 
     _renderMergePointers: function() {
@@ -674,6 +754,9 @@ define(['d3'], function() {
           points[1] = x2 + ',' + y2;
           return points.join(' ');
         });
+
+      existingPointers.exit()
+        .remove()
     },
 
     _renderIdLabels: function() {
@@ -703,6 +786,9 @@ define(['d3'], function() {
         .classed(className, true)
         .text(getText)
         .call(fixIdPosition, view, delta);
+
+      existingTexts.exit()
+        .remove()
     },
 
     _parseTagData: function() {
@@ -857,6 +943,9 @@ define(['d3'], function() {
           return commit.cx;
         });
 
+      existingTags.exit()
+        .remove()
+
       this._markBranchlessCommits();
     },
 
@@ -941,7 +1030,10 @@ define(['d3'], function() {
       delete ancestors.initial
       ancestors[refspec] = -1
       var commitIds = Object.keys(ancestors)
-      this.flashProperty(commitIds, 'logging')
+      this.lock()
+      this.flashProperty(commitIds, 'logging', function () {
+        this.unlock()
+      })
       return commitIds.map(function(commitId) {
         return {commit: this.getCommit(commitId), order: ancestors[commitId]}
       }, this).sort(function(a,b) {
@@ -1001,6 +1093,7 @@ define(['d3'], function() {
         refs.forEach(function(ref) {
           var commit = this.getCommit(ref)
           var message = commit.message || ""
+          this.lock()
           this.flashProperty([commit.id], 'cherryPicked', function() {
             this.commit({cherryPickSource: [commit.id]}, message)
             var reflogMessage = "cherry-pick: " + message
@@ -1012,6 +1105,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
+            this.unlock()
           })
         }, this)
       } else {
@@ -1020,6 +1114,7 @@ define(['d3'], function() {
           var message = commit.message || ""
           var cherryPickSource = this.getNonMainlineCommits(commit.id, mainline)
 
+          this.lock()
           this.flashProperty(cherryPickSource, 'cherryPicked', function() {
             this.commit({cherryPickSource: cherryPickSource}, message)
             var reflogMessage = "cherry-pick: " + message
@@ -1031,6 +1126,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
+            this.unlock()
           })
         }, this)
       }
@@ -1232,6 +1328,7 @@ define(['d3'], function() {
         refs.forEach(function(ref) {
           var commit = this.getCommit(ref)
           var message = commit.message || ""
+          this.lock()
           this.flashProperty([commit.id], 'reverted', function() {
             this.commit({revertSource: [commit.id]}, "Revert " + commit.id)
             var reflogMessage = "revert: " + message
@@ -1243,6 +1340,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
+            this.unlock()
           })
         }, this)
       } else {
@@ -1251,6 +1349,7 @@ define(['d3'], function() {
           var message = commit.message || ""
           var revertSource = this.getNonMainlineCommits(commit.id, mainline)
 
+          this.lock()
           this.flashProperty(revertSource, 'reverted', function() {
             this.commit({revertSource: revertSource}, "Revert " + commit.id)
             var reflogMessage = "revert: " + message
@@ -1262,6 +1361,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
+            this.unlock()
           })
         }, this)
       }
@@ -1352,6 +1452,7 @@ define(['d3'], function() {
               return uniqueAncestors[key2] - uniqueAncestors[key1]
             })
 
+      this.lock()
       setTimeout(function() {
         this.flashProperty(commitsToCopy, 'rebased', function() {
           commitsToCopy.forEach(function(ref) {
@@ -1363,6 +1464,7 @@ define(['d3'], function() {
             if (origBranch) {
               this.moveTag(origBranch, newHeadCommit.id)
               this.reset(origBranch)
+              this._setCurrentBranch(origBranch)
               this.addReflogEntry(
                 'HEAD', targetCommit.id, 'rebase finished: returning to resf/heads/' + origBranch
               )
@@ -1372,6 +1474,7 @@ define(['d3'], function() {
               )
             }
             this.unsetProperty(commitsToCopy, 'rebased')
+            this.unlock()
           }.bind(this), 1000)
         })
       }.bind(this), 1000)
