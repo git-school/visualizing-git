@@ -26,11 +26,11 @@ function(_yargs) {
     this._tempCommand = '';
     this.rebaseConfig = {}; // to configure branches for rebase
 
-    this.undoStacks = {
-      hv: [this.historyView.serialize()]
-    }
-    this.undoPointers = {
-      hv: 0
+    this.undoHistory = {
+      pointer: 0,
+      stack: [
+        { hv: this.historyView.serialize() }
+      ]
     }
 
     this.historyView.on('lock', this.lock.bind(this))
@@ -50,12 +50,11 @@ function(_yargs) {
     createUndoSnapshot: function (replace) {
       var state = this.historyView.serialize()
       if (!replace) {
-        this.undoPointers.hv++
-        this.undoStacks.hv.length = this.undoPointers.hv
-        this.undoStacks.hv.push(state)
+        this.undoHistory.pointer++
+        this.undoHistory.stack.length = this.undoHistory.pointer
+        this.undoHistory.stack.push({ hv: state })
       } else {
-        var len = this.undoStacks.hv.length
-        this.undoStacks.hv[len - 1] = state
+        this.undoHistory.stack[this.undoHistory.pointer] = { hv: state }
       }
     },
 
@@ -149,11 +148,11 @@ function(_yargs) {
       }
 
       if (entry.trim().toLowerCase() === 'undo') {
-        var lastId = this.undoPointers.hv - 1
-        var lastState = this.undoStacks.hv[lastId]
+        var lastId = this.undoHistory.pointer - 1
+        var lastState = this.undoHistory.stack[lastId]
         if (lastState) {
-          this.historyView.deserialize(lastState)
-          this.undoPointers.hv = lastId
+          this.historyView.deserialize(lastState.hv)
+          this.undoHistory.pointer = lastId
         } else {
           this.error("Nothing to undo")
         }
@@ -164,11 +163,11 @@ function(_yargs) {
       }
 
       if (entry.trim().toLowerCase() === 'redo') {
-        var lastId = this.undoPointers.hv + 1
-        var lastState = this.undoStacks.hv[lastId]
+        var lastId = this.undoHistory.pointer + 1
+        var lastState = this.undoHistory.stack[lastId]
         if (lastState) {
-          this.historyView.deserialize(lastState)
-          this.undoPointers.hv = lastId
+          this.historyView.deserialize(lastState.hv)
+          this.undoHistory.pointer = lastId
         } else {
           this.error("Nothing to redo")
         }
