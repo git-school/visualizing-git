@@ -715,8 +715,10 @@ function(_yargs) {
 
         remote.commitData = remote.commitData.concat(toPush);
         remote.moveTag(remoteRef, toPush[toPush.length - 1].id);
+        local.moveTag('origin/' + localRef, localRef)
         remote.renderCommits();
-      } 
+        local.renderTags()
+      }
     },
 
     config: function(args) {
