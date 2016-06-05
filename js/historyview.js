@@ -1382,6 +1382,10 @@ define(['d3'], function() {
       var startCommit = this.getCommit(start),
         searchCommit = this.getCommit(search)
 
+      if (!searchCommit) {
+        return false
+      }
+
       if (startCommit === searchCommit) {
         return true
       } else {
