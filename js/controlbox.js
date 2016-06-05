@@ -631,7 +631,7 @@ function(_yargs) {
         if (isFastForward) {
           control.info('Fast-forwarded to ' + rtBranch + '.');
         }
-      }, 750);
+      }.bind(this), 750);
     },
 
     push: function(args) {
@@ -653,6 +653,10 @@ function(_yargs) {
 
       if (!remote) {
         throw new Error('There is no remote server named "' + remoteName + '".');
+      }
+
+      if (remote.branches.indexOf(remoteRef) === -1) {
+        remote.branch(remoteRef, 'e137e9b')
       }
 
       if (branchArgs) {
@@ -712,9 +716,7 @@ function(_yargs) {
         remote.commitData = remote.commitData.concat(toPush);
         remote.moveTag(remoteRef, toPush[toPush.length - 1].id);
         remote.renderCommits();
-      } else {
-        this.info('Sorry, creating new remote branches is not supported yet.');
-      }
+      } 
     },
 
     config: function(args) {
