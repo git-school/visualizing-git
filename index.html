@@ -272,7 +272,7 @@ require(['explaingit'], function (explainGit) {
         height: '100%',
         initialMessage: 'Have fun.',
         commitData: [
-            {id: 'e137e9b', tags: ['master'], message: 'first commit'}
+            {id: 'e137e9b', tags: ['master', 'origin/master'], message: 'first commit'}
         ],
         originData: [
             {id: 'e137e9b', tags: ['master'], message: 'first commit'}
@@ -280,7 +280,7 @@ require(['explaingit'], function (explainGit) {
         undoHistory: savedState,
         savedState: savedState && savedState.stack[savedState.pointer].hv
       }
-      
+
       explainGit.open(initial);
     }
 
