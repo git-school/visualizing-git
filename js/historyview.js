@@ -514,6 +514,10 @@ define(['d3'], function() {
         .classed('svg-container', true)
         .classed('remote-container', this.isRemote);
 
+      if (this.isRemote) {
+        $(svgContainer).draggable();
+      }
+
       svg = svgContainer.append('svg:svg');
 
       svg.attr('id', this.name)
