@@ -299,12 +299,14 @@ define(['d3'], function() {
 
     deserialize: function (data) {
       data = JSON.parse(data)
-      this.commitData = data.commitData
-      this.branches = data.branches
-      this.logs = data.logs
-      this.currentBranch = data.currentBranch
-      this.renderCommits()
-      this.renderTags()
+      if (data) {
+        this.commitData = data.commitData
+        this.branches = data.branches
+        this.logs = data.logs
+        this.currentBranch = data.currentBranch
+        this.renderCommits()
+        this.renderTags()
+      }
     },
 
     emit: function (event) {

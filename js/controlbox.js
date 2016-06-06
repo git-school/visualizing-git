@@ -29,7 +29,10 @@ function(_yargs) {
     this.undoHistory = config.undoHistory || {
       pointer: 0,
       stack: [
-        { hv: this.historyView.serialize() }
+        {
+          hv: this.historyView.serialize(),
+          ov: this.originView && this.originView.serialize()
+        }
       ]
     }
 
@@ -48,13 +51,16 @@ function(_yargs) {
     },
 
     createUndoSnapshot: function (replace) {
-      var state = this.historyView.serialize()
+      var state = {
+        hv: this.historyView.serialize(),
+        ov: (this.originView && this.originView.serialize()) || 'null'
+      }
       if (!replace) {
         this.undoHistory.pointer++
         this.undoHistory.stack.length = this.undoHistory.pointer
-        this.undoHistory.stack.push({ hv: state })
+        this.undoHistory.stack.push(state)
       } else {
-        this.undoHistory.stack[this.undoHistory.pointer] = { hv: state }
+        this.undoHistory.stack[this.undoHistory.pointer] = state
       }
 
       this.persist()
@@ -160,6 +166,7 @@ function(_yargs) {
         var lastState = this.undoHistory.stack[lastId]
         if (lastState) {
           this.historyView.deserialize(lastState.hv)
+          this.originView && this.originView.deserialize(lastState.ov)
           this.undoHistory.pointer = lastId
         } else {
           this.error("Nothing to undo")
@@ -176,6 +183,7 @@ function(_yargs) {
         var lastState = this.undoHistory.stack[lastId]
         if (lastState) {
           this.historyView.deserialize(lastState.hv)
+          this.originView && this.originView.deserialize(lastState.ov)
           this.undoHistory.pointer = lastId
         } else {
           this.error("Nothing to redo")
