@@ -290,6 +290,7 @@ require(['explaingit'], function (explainGit) {
         if (window.localStorage) {
           window.localStorage.removeItem('git-viz-snapshot')
         }
+        $('.svg-container.remote-container').remove()
         open()
       }
     }
