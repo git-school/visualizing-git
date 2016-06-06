@@ -3,10 +3,13 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 <title>Explain Git with D3</title>
+<script src="js/vendor/jquery.js"></script>
+<script src="js/vendor/jquery-ui.min.js"></script>
 <script data-main="js/main" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.4/require.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/2.1.0/normalize.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/1140/2.0/1140.css">
 <link rel="stylesheet" href="css/explaingit.css">
+<link rel="stylesheet" href="css/jquery-ui.min.css">
 </head>
 <body>
 
@@ -264,34 +267,24 @@ require(['explaingit'], function (explainGit) {
 
       var savedState = null
       if (window.localStorage) {
-        savedState = window.localStorage.getItem('git-viz-snapshot')
+        savedState = JSON.parse(window.localStorage.getItem('git-viz-snapshot') || 'null')
       }
 
-      var initial = null
-      if (savedState) {
-        savedState = JSON.parse(savedState)
-        var serialized = savedState.stack[savedState.pointer].hv
-        initial = {
-          name: 'Zen',
-          height: '100%',
-          initialMessage: 'Have fun.',
-          commitData: [
-              {id: 'e137e9b', tags: ['master'], message: 'first commit'}
-          ],
-          undoHistory: savedState,
-          savedState: serialized
-        }
-      } else {
-        initial = {
-            name: 'Zen',
-            height: '100%',
-            commitData: [
-                {id: 'e137e9b', tags: ['master'], message: 'first commit'}
-            ],
-            initialMessage:
-                'Have fun.'
-        }
+      var initial = {
+        name: 'Zen',
+        height: '100%',
+        initialMessage: 'Have fun.',
+        commitData: [
+            {id: 'e137e9b', tags: ['master', 'origin/master'], message: 'first commit'}
+        ],
+        originData: [
+            {id: 'e137e9b', tags: ['master'], message: 'first commit'}
+        ],
+        undoHistory: savedState,
+        hvSavedState: savedState && savedState.stack[savedState.pointer].hv,
+        ovSavedState: savedState && savedState.stack[savedState.pointer].ov
       }
+
       explainGit.open(initial);
     }
 
@@ -300,6 +293,7 @@ require(['explaingit'], function (explainGit) {
         if (window.localStorage) {
           window.localStorage.removeItem('git-viz-snapshot')
         }
+        $('.svg-container.remote-container').remove()
         open()
       }
     }

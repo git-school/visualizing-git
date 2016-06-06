@@ -299,12 +299,14 @@ define(['d3'], function() {
 
     deserialize: function (data) {
       data = JSON.parse(data)
-      this.commitData = data.commitData
-      this.branches = data.branches
-      this.logs = data.logs
-      this.currentBranch = data.currentBranch
-      this.renderCommits()
-      this.renderTags()
+      if (data) {
+        this.commitData = data.commitData
+        this.branches = data.branches
+        this.logs = data.logs
+        this.currentBranch = data.currentBranch
+        this.renderCommits()
+        this.renderTags()
+      }
     },
 
     emit: function (event) {
@@ -511,6 +513,10 @@ define(['d3'], function() {
       svgContainer = container.append('div')
         .classed('svg-container', true)
         .classed('remote-container', this.isRemote);
+
+      if (this.isRemote) {
+        $(svgContainer).draggable();
+      }
 
       svg = svgContainer.append('svg:svg');
 
@@ -1381,6 +1387,10 @@ define(['d3'], function() {
     isAncestorOf: function(search, start) {
       var startCommit = this.getCommit(start),
         searchCommit = this.getCommit(search)
+
+      if (!searchCommit) {
+        return false
+      }
 
       if (startCommit === searchCommit) {
         return true

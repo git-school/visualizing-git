@@ -29,7 +29,10 @@ function(_yargs) {
     this.undoHistory = config.undoHistory || {
       pointer: 0,
       stack: [
-        { hv: this.historyView.serialize() }
+        {
+          hv: this.historyView.serialize(),
+          ov: this.originView && this.originView.serialize()
+        }
       ]
     }
 
@@ -48,13 +51,16 @@ function(_yargs) {
     },
 
     createUndoSnapshot: function (replace) {
-      var state = this.historyView.serialize()
+      var state = {
+        hv: this.historyView.serialize(),
+        ov: (this.originView && this.originView.serialize()) || 'null'
+      }
       if (!replace) {
         this.undoHistory.pointer++
         this.undoHistory.stack.length = this.undoHistory.pointer
-        this.undoHistory.stack.push({ hv: state })
+        this.undoHistory.stack.push(state)
       } else {
-        this.undoHistory.stack[this.undoHistory.pointer] = { hv: state }
+        this.undoHistory.stack[this.undoHistory.pointer] = state
       }
 
       this.persist()
@@ -160,6 +166,7 @@ function(_yargs) {
         var lastState = this.undoHistory.stack[lastId]
         if (lastState) {
           this.historyView.deserialize(lastState.hv)
+          this.originView && this.originView.deserialize(lastState.ov)
           this.undoHistory.pointer = lastId
         } else {
           this.error("Nothing to undo")
@@ -176,6 +183,7 @@ function(_yargs) {
         var lastState = this.undoHistory.stack[lastId]
         if (lastState) {
           this.historyView.deserialize(lastState.hv)
+          this.originView && this.originView.deserialize(lastState.ov)
           this.undoHistory.pointer = lastId
         } else {
           this.error("Nothing to redo")
@@ -631,7 +639,7 @@ function(_yargs) {
         if (isFastForward) {
           control.info('Fast-forwarded to ' + rtBranch + '.');
         }
-      }, 750);
+      }.bind(this), 750);
     },
 
     push: function(args) {
@@ -653,6 +661,10 @@ function(_yargs) {
 
       if (!remote) {
         throw new Error('There is no remote server named "' + remoteName + '".');
+      }
+
+      if (remote.branches.indexOf(remoteRef) === -1) {
+        remote.branch(remoteRef, 'e137e9b')
       }
 
       if (branchArgs) {
@@ -711,9 +723,9 @@ function(_yargs) {
 
         remote.commitData = remote.commitData.concat(toPush);
         remote.moveTag(remoteRef, toPush[toPush.length - 1].id);
+        local.moveTag('origin/' + localRef, localRef)
         remote.renderCommits();
-      } else {
-        this.info('Sorry, creating new remote branches is not supported yet.');
+        local.renderTags()
       }
     },
 
