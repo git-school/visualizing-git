@@ -63,6 +63,7 @@ span.cmd {
   background-color: #EFF1FF;
   border-left: 1px dotted #AAA;
   border-bottom: 1px dotted #AAA;
+  z-index: 100
 }
 
 #ExplainGitZen-Container {
