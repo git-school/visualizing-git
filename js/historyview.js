@@ -557,7 +557,7 @@ define(['d3'], function() {
 
       this.renderCommits();
 
-      // this._setCurrentBranch(this.currentBranch);
+      this._setCurrentBranch(this.currentBranch);
     },
 
     destroy: function() {
