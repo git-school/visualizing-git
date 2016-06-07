@@ -96,7 +96,7 @@ function(_yargs, d3, demos) {
         if (!confirm('This will erase your current progress. Continue?')) {
           d3.event.preventDefault()
           d3.event.stopPropagation()
-          selector.node().value = window.location.hash.replace(/^#/, '')
+          selector.node().value = window.location.hash.replace(/^#/, '') || demos[0].key
           return false
         }
         var currentDemo = window.location.hash

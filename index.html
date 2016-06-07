@@ -53,27 +53,39 @@ require(['explaingit', 'demos'], function (explainGit, demos) {
       }
     }
 
-    var lastDemo = demos[0]
+    function cleanupDom () {
+      $('.svg-container.remote-container').remove()
+    }
+
+    function clean () {
+      clearSavedState()
+      cleanupDom()
+    }
+
+    function cleanHash (hash) {
+      return hash.replace(/^#/, '')
+    }
+
+    function findDemo (demos, name) {
+      return demos.filter(function (d) {
+        return d.key === name
+      })[0]
+    }
+
+    function copyDemo (demo) {
+      // make a deep copy
+      return JSON.parse(JSON.stringify(demo))
+    }
+
+    var lastDemo = findDemo(demos, cleanHash(window.location.hash)) || demos[0]
+
     ready(function () {
       window.onhashchange = function () {
-        var demoName = window.location.hash.replace(/^#/, '')
-        console.log('loading', demoName)
-        var demo = demos.filter(function (d) {
-          return d.key === demoName
-        })[0]
-        console.log('loading', demo)
+        var demo = findDemo(demos, cleanHash(window.location.hash)) || lastDemo
         if (demo) {
           lastDemo = demo
-          clearSavedState()
-          $('.svg-container.remote-container').remove()
-
-          explainGit.reset()
-          explainGit.open(Object.assign({}, demo, {
-            name: 'Zen',
-            height: '100%',
-            initialMessage: 'Have fun.'
-          }))
-
+          clean()
+          open()
         }
       }
 
@@ -88,7 +100,7 @@ require(['explaingit', 'demos'], function (explainGit, demos) {
         savedState = JSON.parse(window.localStorage.getItem('git-viz-snapshot') || 'null')
       }
 
-      var initial = Object.assign({}, lastDemo, {
+      var initial = Object.assign(copyDemo(lastDemo), {
         name: 'Zen',
         height: '100%',
         initialMessage: 'Have fun.',
@@ -102,8 +114,7 @@ require(['explaingit', 'demos'], function (explainGit, demos) {
 
     window.resetVis = function () {
       if (confirm('This will reset your visualization. Are you sure?')) {
-        clearSavedState()
-        $('.svg-container.remote-container').remove()
+        clean()
         open()
       }
     }
