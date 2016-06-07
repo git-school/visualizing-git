@@ -1,5 +1,5 @@
-define(['vendor/yargs-parser', 'd3'],
-function(_yargs) {
+define(['vendor/yargs-parser', 'd3', 'demos'],
+function(_yargs, d3, demos) {
   "use strict";
 
   function yargs(str, opts) {
@@ -74,17 +74,45 @@ function(_yargs) {
 
     render: function(container) {
       var cBox = this,
-        cBoxContainer, log, input;
+        cBoxContainer, log, input, selector;
 
       cBoxContainer = container.append('div')
         .classed('control-box', true);
 
+      selector = cBoxContainer.append('select')
+        .classed('scenario-chooser', true)
+      window.s = selector
+
+      demos.forEach(function (demo) {
+        var opt = selector.append('option')
+          .text(demo.title)
+          .attr('value', demo.key)
+        if (window.location.hash === ('#' + demo.key)) {
+          opt.attr('selected', 'selected')
+        }
+      })
+
+      selector.on('change', function () {
+        if (!confirm('This will erase your current progress. Continue?')) {
+          d3.event.preventDefault()
+          d3.event.stopPropagation()
+          selector.node().value = window.location.hash.replace(/^#/, '')
+          return false
+        }
+        var currentDemo = window.location.hash
+        var sel = selector.node()
+        var newDemo = sel.options[sel.selectedIndex].value
+        if (('#' + newDemo) !== currentDemo) {
+          window.location.hash = newDemo
+        }
+      })
 
       log = cBoxContainer.append('div')
         .classed('log', true);
 
       input = cBoxContainer.append('input')
         .attr('type', 'text')
+        .classed('input', true)
         .attr('placeholder', 'enter git command');
 
       input.on('keyup', function() {

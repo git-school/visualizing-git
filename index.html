@@ -38,7 +38,7 @@
 </svg>
 
 <script type="text/javascript">
-require(['explaingit'], function (explainGit) {
+require(['explaingit', 'demos'], function (explainGit, demos) {
     var examples = {
         'commit': {
             name: 'Commit',
@@ -260,7 +260,38 @@ require(['explaingit'], function (explainGit) {
       }
     }
 
-    ready(open)
+    function clearSavedState () {
+      if (window.localStorage) {
+        window.localStorage.removeItem('git-viz-snapshot')
+      }
+    }
+
+    var lastDemo = demos[0]
+    ready(function () {
+      window.onhashchange = function () {
+        var demoName = window.location.hash.replace(/^#/, '')
+        console.log('loading', demoName)
+        var demo = demos.filter(function (d) {
+          return d.key === demoName
+        })[0]
+        console.log('loading', demo)
+        if (demo) {
+          lastDemo = demo
+          clearSavedState()
+          $('.svg-container.remote-container').remove()
+
+          explainGit.reset()
+          explainGit.open(Object.assign({}, demo, {
+            name: 'Zen',
+            height: '100%',
+            initialMessage: 'Have fun.'
+          }))
+
+        }
+      }
+
+      open()
+    })
 
     function open() {
       explainGit.reset();
@@ -270,29 +301,21 @@ require(['explaingit'], function (explainGit) {
         savedState = JSON.parse(window.localStorage.getItem('git-viz-snapshot') || 'null')
       }
 
-      var initial = {
+      var initial = Object.assign({}, lastDemo, {
         name: 'Zen',
         height: '100%',
         initialMessage: 'Have fun.',
-        commitData: [
-            {id: 'e137e9b', tags: ['master', 'origin/master'], message: 'first commit'}
-        ],
-        originData: [
-            {id: 'e137e9b', tags: ['master'], message: 'first commit'}
-        ],
         undoHistory: savedState,
         hvSavedState: savedState && savedState.stack[savedState.pointer].hv,
         ovSavedState: savedState && savedState.stack[savedState.pointer].ov
-      }
+      })
 
       explainGit.open(initial);
     }
 
     window.resetVis = function () {
       if (confirm('This will reset your visualization. Are you sure?')) {
-        if (window.localStorage) {
-          window.localStorage.removeItem('git-viz-snapshot')
-        }
+        clearSavedState()
         $('.svg-container.remote-container').remove()
         open()
       }
