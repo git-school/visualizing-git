@@ -103,7 +103,7 @@ require(['explaingit', 'demos'], function (explainGit, demos) {
       var initial = Object.assign(copyDemo(lastDemo), {
         name: 'Zen',
         height: '100%',
-        initialMessage: 'Have fun.',
+        initialMessage: lastDemo.message,
         undoHistory: savedState,
         hvSavedState: savedState && savedState.stack[savedState.pointer].hv,
         ovSavedState: savedState && savedState.stack[savedState.pointer].ov
