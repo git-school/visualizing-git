@@ -81,7 +81,6 @@ function(_yargs, d3, demos) {
 
       selector = cBoxContainer.append('select')
         .classed('scenario-chooser', true)
-      window.s = selector
 
       demos.forEach(function (demo) {
         var opt = selector.append('option')

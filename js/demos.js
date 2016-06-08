@@ -1,22 +1,4 @@
 define([], function () {
-  // function makeRepo (rootCommit, commits) {
-  //   var commits = commits || []
-  //   var children = rootCommit.children
-  //   delete rootCommit.children
-  //   commits.push(rootCommit)
-  //
-  //   if (!children.length) {
-  //     return commits
-  //   } else {
-  //     return commits.concat(makeRepo())
-  //   }
-  // }
-  //
-  // function commit (sha, message, tags, children) {
-  //   return {
-  //     id: sha, message: message || null, tags: tags || [], children: children
-  //   }
-  // }
 
   var free = {
     title: 'Free Explore',
