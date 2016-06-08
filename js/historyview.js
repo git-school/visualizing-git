@@ -237,18 +237,24 @@ define(['d3'], function() {
    */
   function HistoryView(config) {
     var commitData = config.commitData || [],
-      commit;
+      commit, branch;
 
+    this.branches = [];
     for (var i = 0; i < commitData.length; i++) {
       commit = commitData[i];
       !commit.parent && (commit.parent = 'initial');
       !commit.tags && (commit.tags = []);
+      for (var j = 0; j < commit.tags.length; j++) {
+        branch = commit.tags[j]
+        if (branch.indexOf('[') !== 0 && this.branches.indexOf(branch) === -1) {
+          this.branches.push(branch)
+        }
+      }
     }
 
     this.name = config.name || 'UnnamedHistoryView';
     this.commitData = commitData;
 
-    this.branches = ['master'];
     this.currentBranch = config.currentBranch || 'master';
 
     this.width = config.width;
@@ -1458,7 +1464,6 @@ define(['d3'], function() {
       var uniqueAncestors = getUniqueSetItems(ancestorsFromTarget, ancestorsFromBase)[1]
       var commitsToCopy = Object.keys(uniqueAncestors).concat(origHeadCommit.id)
             .sort(function(key1, key2) {
-              console.log(key1, uniqueAncestors[key1], key2, uniqueAncestors[key2])
               return uniqueAncestors[key2] - uniqueAncestors[key1]
             })
 

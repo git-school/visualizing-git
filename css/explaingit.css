@@ -116,8 +116,13 @@ span.cmd {
   bottom: 0;
   width: 250px;
   vertical-align: bottom;
-  background-color: #000;
   border: 1px dotted #AAA;
+}
+
+.control-box select {
+  position: absolute;
+  left: 3px;
+  top: 3px;
 }
 
 .control-box button {
@@ -130,14 +135,15 @@ span.cmd {
 .control-box .log {
   overflow-y: auto;
   position: absolute;
-  top: 0px;
+  background: #000;
+  top: 30px;
   bottom: 20px;
   left: 0;
   right: 0;
   border-bottom: 1px solid #AAA;
 }
 
-.control-box .log, .control-box input[type="text"] {
+.control-box .log, .control-box input[type="text"], .control-box .input {
   font-family: Courier New;
   font-size: 14px;
 }
@@ -146,7 +152,7 @@ span.cmd {
   padding-left: 15px;
   color: #FFF;
   line-height: 14px;
-  background: url(../images/prompt.gif) no-repeat left center transparent;
+  background: url(../images/prompt.gif) no-repeat left center black;
 }
 
 .control-box input[type="text"] {
@@ -155,7 +161,7 @@ span.cmd {
   padding-left: 15px;
   color: #FFF;
   line-height: 14px;
-  background: url(../images/prompt.gif) no-repeat left center transparent;
+  background: url(../images/prompt.gif) no-repeat left center black;
 }
 
 .control-box .log .info, .control-box .log .error {
