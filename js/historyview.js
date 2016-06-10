@@ -1043,9 +1043,7 @@ define(['d3'], function() {
       ancestors[refspec] = -1
       var commitIds = Object.keys(ancestors)
       this.lock()
-      this.flashProperty(commitIds, 'logging', function () {
-        this.unlock()
-      })
+      this.flashProperty(commitIds, 'logging', null, this.unlock)
       return commitIds.map(function(commitId) {
         return {commit: this.getCommit(commitId), order: ancestors[commitId]}
       }, this).sort(function(a,b) {
@@ -1117,8 +1115,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
-            this.unlock()
-          })
+          }, this.unlock)
         }, this)
       } else {
         refs.forEach(function(ref) {
@@ -1138,8 +1135,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
-            this.unlock()
-          })
+          }, this.unlock)
         }, this)
       }
     },
@@ -1154,7 +1150,7 @@ define(['d3'], function() {
       return Object.keys(uniqueAncestors[mainline-1]).concat(ref)
     },
 
-    flashProperty: function(refs, property, callback) {
+    flashProperty: function(refs, property, callback, callback2) {
       this.setProperty(refs, property)
       this.renderCommits()
       setTimeout(function() {
@@ -1162,6 +1158,7 @@ define(['d3'], function() {
         setTimeout(function() {
           this.unsetProperty(refs, property)
           this.renderCommits()
+          callback2 && callback2.call(this)
         }.bind(this), 500)
       }.bind(this), 1000)
     },
@@ -1352,8 +1349,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
-            this.unlock()
-          })
+          }, this.unlock)
         }, this)
       } else {
         refs.forEach(function(ref) {
@@ -1373,8 +1369,7 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
-            this.unlock()
-          })
+          }, this.unlock)
         }, this)
       }
     },
@@ -1474,6 +1469,7 @@ define(['d3'], function() {
             this.commit({rebased: true, rebaseSource: ref}, this.getCommit(ref).message)
           }, this)
           var newHeadCommit = this.getCommit('HEAD')
+          this.lock()
           setTimeout(function() {
             this.deleteBranch('ORIG_HEAD')
             if (origBranch) {
@@ -1491,7 +1487,7 @@ define(['d3'], function() {
             this.unsetProperty(commitsToCopy, 'rebased')
             this.unlock()
           }.bind(this), 1000)
-        })
+        }, this.unlock)
       }.bind(this), 1000)
     }
   };
