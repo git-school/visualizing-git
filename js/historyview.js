@@ -642,6 +642,9 @@ define(['d3'], function() {
         })
         .classed('cherry-picked', function(d) {
           return d.cherryPicked || d.cherryPickSource;
+        })
+        .classed('checked-out', function(d) {
+          return d.tags.indexOf('HEAD') > -1
         });
 
       existingCircles.transition()
