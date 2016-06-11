@@ -114,6 +114,16 @@ function(_yargs, d3, demos) {
         .classed('input', true)
         .attr('placeholder', 'enter git command');
 
+      log.on('click', function () {
+        if (d3.event.target === log.node()) {
+          input.node().focus()
+        }
+      })
+
+      setTimeout(function() {
+        input.node().focus()
+      })
+
       input.on('keyup', function() {
         var e = d3.event;
 
