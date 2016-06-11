@@ -1,5 +1,13 @@
 /* styles */
 
+#last-command {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 70px;
+  opacity: 0.8;
+}
+
 body, html {
   height: 100%;
 }

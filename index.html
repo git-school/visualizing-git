@@ -14,7 +14,9 @@
 <body>
 
 <div id="ExplainGitZen-Container" style="display:none">
-    <div class="playground-container"></div>
+    <div class="playground-container">
+      <div id='last-command' style='display: none;'></div>
+    </div>
 </div>
 
 <svg version="1.1" baseProfile="full"
@@ -117,6 +119,10 @@ require(['explaingit', 'demos'], function (explainGit, demos) {
         clean()
         open()
       }
+    }
+
+    window.pres = function () {
+      document.getElementById('last-command').style.display = 'block'
     }
 });
 </script>

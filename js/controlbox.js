@@ -156,7 +156,10 @@ function(_yargs, d3, demos) {
             }
             e.stopImmediatePropagation();
             break;
+          default:
+            document.getElementById('last-command').textContent = document.querySelectorAll(".control-box .input")[0].value
         }
+
       });
 
       this.container = cBoxContainer;
@@ -187,6 +190,8 @@ function(_yargs, d3, demos) {
       if (entry.trim() === '') {
         return;
       }
+
+      document.getElementById('last-command').textContent = entry
 
       if (entry.trim().toLowerCase() === 'undo') {
         var lastId = this.undoHistory.pointer - 1
