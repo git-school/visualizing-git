@@ -152,6 +152,12 @@ span.cmd {
   border-bottom: 1px solid #AAA;
 }
 
+.control-box .log .reflog-entry, .control-box .log .log-entry {
+  display: inline-block;
+  padding-left: 15px;
+  text-indent: -15px;
+}
+
 .control-box .log, .control-box input[type="text"], .control-box .input {
   font-family: Courier New;
   font-size: 14px;

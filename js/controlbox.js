@@ -335,7 +335,8 @@ function(_yargs, d3, demos) {
       if (args.length > 1) {
         return this.error("'git log' can take at most one argument in this tool")
       }
-      var logs = this.historyView.getLogEntries(args[0] || 'head').join('<br>')
+      var logs = this.historyView.getLogEntries(args[0] || 'head')
+        .map(l => `<span class='log-entry'>&gt; ${l}</span>`).join('')
       this.info(logs)
     },
 
@@ -819,7 +820,9 @@ function(_yargs, d3, demos) {
         }
       } else if (subcommand === "show") {
         var logs = this.historyView.getReflogEntries(ref)
-        this.info(logs.join("<br>"))
+        this.info(
+          logs.map(l => `<span class='reflog-entry'>&gt; ${l}</span>`).join('')
+        )
       } else if (subcommand === "expire" || subcommand === "delete") {
         this.info("Real git reflog supports the '" + subcommand +
                   "' subcommand but this tool only supports 'show' and 'exists'")
