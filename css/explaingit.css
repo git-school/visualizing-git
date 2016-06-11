@@ -247,7 +247,7 @@ circle.commit.logging {
 }
 
 .commit-pointer {
-  stroke: #666;
+  stroke: rgba(100, 100, 100, 0.5);
   stroke-width: 4;
 }
 
