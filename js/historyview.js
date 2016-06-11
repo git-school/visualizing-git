@@ -963,13 +963,13 @@ define(['d3'], function() {
 
     _setCurrentBranch: function(branch) {
       var display = this.svg.select('text.current-branch-display'),
-        text = 'Current Branch: ';
+        text = 'HEAD: ';
 
       if (branch && branch.indexOf('/') === -1) {
         text += branch;
         this.currentBranch = branch;
       } else {
-        text += ' DETACHED HEAD';
+        text += ' ' + this.getCommit('head') + ' (detached head)';
         this.currentBranch = null;
       }
 
