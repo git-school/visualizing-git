@@ -260,7 +260,7 @@ define(['d3'], function() {
     this.width = config.width;
     this.height = config.height || 400;
     this.orginalBaseLine = config.baseLine;
-    this.baseLine = this.height * (config.baseLine || 0.6);
+    this.baseLine = this.height * (config.baseLine || 0.9);
 
     this.commitRadius = config.commitRadius || 20;
     this.pointerMargin = this.commitRadius * 1.3;
@@ -528,7 +528,7 @@ define(['d3'], function() {
 
       svg.attr('id', this.name)
         .attr('width', this.width)
-        .attr('height', this.height);
+        .attr('height', this.isRemote ? this.height + 150 : this.height);
 
       if (this.isRemote) {
         svg.append('svg:text')
