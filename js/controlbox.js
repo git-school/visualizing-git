@@ -202,6 +202,7 @@ function(_yargs, d3, demos) {
         this.terminalOutput.append('div')
           .classed('command-entry', true)
           .html(entry);
+        this._scrollToBottom();
         return
       }
 
@@ -219,6 +220,7 @@ function(_yargs, d3, demos) {
         this.terminalOutput.append('div')
           .classed('command-entry', true)
           .html(entry);
+        this._scrollToBottom();
         return
       }
 
