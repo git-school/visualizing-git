@@ -86,6 +86,7 @@ require(['explaingit', 'demos'], function (explainGit, demos) {
         var demo = findDemo(demos, cleanHash(window.location.hash)) || lastDemo
         if (demo) {
           lastDemo = demo
+          document.getElementById('last-command').textContent = ""
           clean()
           open()
         }
