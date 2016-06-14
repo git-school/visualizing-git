@@ -558,6 +558,7 @@ define(['d3'], function() {
       this.renderCommits();
 
       this._setCurrentBranch(this.currentBranch);
+      this._setCurrentCommit();
     },
 
     destroy: function() {
@@ -976,7 +977,32 @@ define(['d3'], function() {
         this.currentBranch = null;
       }
 
-      display.text(text);
+      //need to clear out display otherwise tspans will keep appending
+      display.text('');
+      display.append('tspan').attr('x','10').attr('dy', '1.2em').text(text);
+    },
+
+    _setCurrentCommit: function() {
+      var display = this.svg.select('text.current-branch-display');
+      
+      //this will error out without checking first to see if commit exits, possible async issue?
+      if(this.getCommit('HEAD')) {
+        display.append('tspan')
+          .attr('x','10')
+          .attr('dy', '1.2em')
+          .text('Sha: ' + this.getCommit('HEAD').id);
+        
+        display.append('tspan')
+          .attr('x','10')
+          .attr('dy', '1.2em')
+          .text('Parent: ' + this.getCommit('HEAD').parent);
+        
+        display.append('tspan')
+          .attr('x','10')
+          .attr('dy', '1.2em')
+          .text('Message: ' + this.getCommit('HEAD').message);                
+      }
+    
     },
 
     addReflogEntry: function(ref, destination, reason) {
@@ -1265,7 +1291,6 @@ define(['d3'], function() {
 
     checkout: function(ref) {
       var commit = this.getCommit(ref);
-
       if (!commit) {
         throw new Error('Cannot find commit: ' + ref);
       }
@@ -1279,6 +1304,7 @@ define(['d3'], function() {
 
       var isBranch = this.branches.indexOf(ref) !== -1
       this._setCurrentBranch(isBranch ? ref : null);
+      this._setCurrentCommit();
       this.moveTag('HEAD', commit.id);
       this.renderTags();
 
@@ -1479,6 +1505,7 @@ define(['d3'], function() {
               this.moveTag(origBranch, newHeadCommit.id)
               this.reset(origBranch)
               this._setCurrentBranch(origBranch)
+              this._setCurrentCommit()
               this.addReflogEntry(
                 'HEAD', targetCommit.id, 'rebase finished: returning to resf/heads/' + origBranch
               )
