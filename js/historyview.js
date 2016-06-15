@@ -514,7 +514,7 @@ define(['d3'], function() {
      * @param container {String} selector for the container to render the SVG into
      */
     render: function(container) {
-      var svgContainer, svg;
+      var svgContainer, svg, display;
 
       svgContainer = container.append('div')
         .classed('svg-container', true)
@@ -547,6 +547,22 @@ define(['d3'], function() {
           .classed('current-branch-display', true)
           .attr('x', 10)
           .attr('y', 45);
+        
+        display = svg.select('text.current-branch-display');
+
+        display.append('svg:tspan')
+          .attr('x','10')
+          .attr('dy', '1.2em');
+        display.append('svg:tspan')
+          .attr('x','10')
+          .attr('dy', '1.2em');
+        display.append('svg:tspan')
+          .attr('x','10')
+          .attr('dy', '1.2em');
+        display.append('svg:tspan')
+          .attr('x','10')
+          .attr('dy', '1.2em');
+
       }
 
       this.svgContainer = svgContainer;
@@ -966,7 +982,7 @@ define(['d3'], function() {
     },
 
     _setCurrentBranch: function(branch) {
-      var display = this.svg.select('text.current-branch-display'),
+      var display = this.svg.select('text.current-branch-display > tspan'),
         text = 'HEAD: ';
 
       if (branch && branch.indexOf('/') === -1) {
@@ -976,31 +992,18 @@ define(['d3'], function() {
         text += ' (detached head)';
         this.currentBranch = null;
       }
-
-      //need to clear out display otherwise tspans will keep appending
-      display.text('');
-      display.append('tspan').attr('x','10').attr('dy', '1.2em').text(text);
+      
+      d3.select(display[0][0]).text(text);
     },
 
     _setCurrentCommit: function() {
-      var display = this.svg.select('text.current-branch-display');
+      var display = this.svg.selectAll('text.current-branch-display > tspan');
       
       //this will error out without checking first to see if commit exits, possible async issue?
       if(this.getCommit('HEAD')) {
-        display.append('tspan')
-          .attr('x','10')
-          .attr('dy', '1.2em')
-          .text('Sha: ' + this.getCommit('HEAD').id);
-        
-        display.append('tspan')
-          .attr('x','10')
-          .attr('dy', '1.2em')
-          .text('Parent: ' + this.getCommit('HEAD').parent);
-        
-        display.append('tspan')
-          .attr('x','10')
-          .attr('dy', '1.2em')
-          .text('Message: ' + this.getCommit('HEAD').message);                
+        d3.select(display[0][1]).text('Sha: ' + this.getCommit('HEAD').id);
+        d3.select(display[0][2]).text('Parent: ' + this.getCommit('HEAD').parent);
+        d3.select(display[0][3]).text('Message: ' + this.getCommit('HEAD').message);
       }
     
     },
@@ -1291,6 +1294,7 @@ define(['d3'], function() {
 
     checkout: function(ref) {
       var commit = this.getCommit(ref);
+      
       if (!commit) {
         throw new Error('Cannot find commit: ' + ref);
       }
