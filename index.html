@@ -15,7 +15,7 @@
 
 <div id="ExplainGitZen-Container" style="display:none">
     <div class="playground-container">
-      <div id='last-command' style='display: none;'></div>
+      <pre id='last-command' style='display: none;'></pre>
     </div>
 </div>
 
@@ -125,6 +125,7 @@ require(['explaingit', 'demos'], function (explainGit, demos) {
     window.pres = function () {
       document.getElementById('last-command').style.display = 'block'
     }
+    pres()
 });
 </script>
 </body>
