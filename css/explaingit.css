@@ -199,21 +199,12 @@ span.cmd {
 }
 
 circle.commit {
-  fill: #EEEEEE;
+  fill: #CCCCCC;
   stroke: #888888;
   stroke-width: 3;
   transition-property: stroke, fill;
   transition-duration: 500ms;
   transition-timing-function: ease-out;
-}
-
-circle.commit.merge-commit {
-  stroke: #663300;
-  fill: #FFFFCC;
-}
-
-circle.commit.merge-commit.checked-out {
-  fill: #FFFFCC;
 }
 
 circle.commit.reverted {
@@ -226,8 +217,8 @@ circle.commit.reverted.checked-out {
 }
 
 circle.commit.rebased {
-  stroke: #3300CC;
-  fill: #CCCCFF;
+  stroke: #560066;
+  fill: #b907a4;
 }
 
 circle.commit.rebased.checked-out {
@@ -235,17 +226,18 @@ circle.commit.rebased.checked-out {
 }
 
 circle.commit.cherry-picked {
-  stroke: #FF0000;
-  fill: #FFEEEE;
+  stroke: #660000;
+  fill: #ff5151;
 }
 
 circle.commit.cherry-picked.checked-out {
-  fill: #FFEEEE;
+  fill: #ff5151;
 }
 
 circle.commit.branchless {
   fill: #FEFEFE;
-  stroke: #DDD;
+  stroke: #888888;
+  stroke-dasharray: 5, 5;
 }
 
 circle.commit.branchless.checked-out {
@@ -253,7 +245,7 @@ circle.commit.branchless.checked-out {
 }
 
 circle.commit.checked-out {
-  fill: #CCFFCC;
+  fill: #8ce08c;
   stroke: #339900;
 }
 
@@ -268,8 +260,9 @@ circle.commit.logging {
 }
 
 .merge-pointer {
-  stroke: #4fa5ce;
+  stroke: rgba(100, 100, 100, 0.5);
   stroke-width: 4;
+  stroke-dasharray: 15, 4;
 }
 
 .commit-pointer.branchless, .merge-pointer.branchless {
