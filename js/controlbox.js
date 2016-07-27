@@ -407,20 +407,23 @@ function(_yargs, d3, demos) {
         return this.getRepoView().deleteBranch(options.delete);
       }
 
-      if (options.remote) {
-        return this.info('This command normally displays all of your remote tracking branches.');
-      }
-
-      if (options.all) {
-        return this.info('This command normally displays all of your tracking branches, both remote and local.');
-      }
-
       if (options._[2]) {
         return this.error('Incorrect usage - supplied too many arguments')
       }
 
       if (!branchName) {
-        var branches = this.getRepoView().getBranchList().join('<br>')
+        var branches
+        if (options.remote) {
+          branches = this.getRepoView().getBranchList().filter(function (b) {
+            return b.indexOf('&nbsp; origin/') === 0
+          }).join('<br>')
+        } else if (options.all) {
+          branches = this.getRepoView().getBranchList().join('<br>')
+        } else {
+          branches = this.getRepoView().getBranchList().filter(function(b) {
+            return b.indexOf('&nbsp; origin/') !== 0
+          }).join('<br>')
+        }
         return this.info(branches)
       }
 
