@@ -643,20 +643,22 @@ function(_yargs, d3, demos) {
       }
 
       // determine which commits the local repo is missing from the origin
+      function checkCommit (commit, branch) {
+        var notInLocal = local.getCommit(commit.id) === null
+        if (notInLocal && commit.id) {
+          if (fetchIds.indexOf(commit.id) === -1) {
+            fetchCommits.unshift(commit)
+            fetchIds.unshift(commit.id)
+          }
+          fetchBranches[branch] += 1
+          commit.parent && checkCommit(origin.getCommit(commit.parent), branch)
+          commit.parent2 && checkCommit(origin.getCommit(commit.parent2), branch)
+        }
+      }
+
       for (fb in fetchBranches) {
         if (origin.branches.indexOf(fb) > -1) {
-          fetchCommit = origin.getCommit(fb);
-
-          var notInLocal = local.getCommit(fetchCommit.id) === null;
-          while (notInLocal) {
-            if (fetchIds.indexOf(fetchCommit.id) === -1) {
-              fetchCommits.unshift(fetchCommit);
-              fetchIds.unshift(fetchCommit.id);
-            }
-            fetchBranches[fb] += 1;
-            fetchCommit = origin.getCommit(fetchCommit.parent);
-            notInLocal = local.getCommit(fetchCommit.id) === null;
-          }
+          checkCommit(origin.getCommit(fb))
         }
       }
 
@@ -666,6 +668,7 @@ function(_yargs, d3, demos) {
         local.commitData.push({
           id: fetchCommit.id,
           parent: fetchCommit.parent,
+          parent2: fetchCommit.parent2,
           tags: []
         });
       }
