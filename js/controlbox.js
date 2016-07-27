@@ -742,6 +742,7 @@ function(_yargs, d3, demos) {
         localCommit, remoteCommit,
         findCommitsToPush,
         isCommonCommit,
+        idsToPush = [],
         toPush = [];
 
       if (remoteName === 'history') {
@@ -775,26 +776,16 @@ function(_yargs, d3, demos) {
       remoteCommit = remote.getCommit(remoteRef);
 
       findCommitsToPush = function findCommitsToPush(localCommit) {
-        var commitToPush,
-          isCommonCommit = remote.getCommit(localCommit.id) !== null;
+        var alreadyPushed = remote.getCommit(localCommit.id) !== null
+        if (!alreadyPushed && idsToPush.indexOf(localCommit.id) === -1) {
+          idsToPush.push(localCommit.id)
 
-        while (!isCommonCommit) {
-          commitToPush = {
-            id: localCommit.id,
-            parent: localCommit.parent,
-            tags: []
-          };
+          toPush.push(Object.assign({}, localCommit, {tags: []}))
 
-          if (typeof localCommit.parent2 === 'string') {
-            commitToPush.parent2 = localCommit.parent2;
-            findCommitsToPush(local.getCommit(localCommit.parent2));
-          }
-
-          toPush.unshift(commitToPush);
-          localCommit = local.getCommit(localCommit.parent);
-          isCommonCommit = remote.getCommit(localCommit.id) !== null;
+          localCommit.parent && findCommitsToPush(local.getCommit(localCommit.parent))
+          localCommit.parent2 && findCommitsToPush(local.getCommit(localCommit.parent2))
         }
-      };
+      }
 
       // push to an existing branch on the remote
       if (remoteCommit && remote.branches.indexOf(remoteRef) > -1) {
