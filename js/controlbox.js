@@ -658,7 +658,7 @@ function(_yargs, d3, demos) {
 
       for (fb in fetchBranches) {
         if (origin.branches.indexOf(fb) > -1) {
-          checkCommit(origin.getCommit(fb))
+          checkCommit(origin.getCommit(fb), fb)
         }
       }
 
