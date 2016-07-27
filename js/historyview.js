@@ -859,18 +859,13 @@ define(['d3'], function() {
           parent = this.getCommit(commit.parent);
           parent2 = this.getCommit(commit.parent2);
 
-          commit.branchless = false;
-
-          while (parent) {
-            parent.branchless = false;
-            parent = this.getCommit(parent.parent);
+          function walkCommit (commit) {
+            commit.branchless = false
+            commit.parent && walkCommit.call(this, this.getCommit(commit.parent))
+            commit.parent2 && walkCommit.call(this, this.getCommit(commit.parent2))
           }
 
-          // just in case this is a merge commit
-          while (parent2) {
-            parent2.branchless = false;
-            parent2 = this.getCommit(parent2.parent);
-          }
+          walkCommit.call(this, commit)
         }
       }
 
