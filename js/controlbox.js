@@ -36,6 +36,8 @@ function(_yargs, d3, demos) {
       ]
     }
 
+    this.mode = 'local'
+
     this.historyView.on('lock', this.lock.bind(this))
     this.historyView.on('unlock', this.unlock.bind(this))
   }
@@ -69,6 +71,27 @@ function(_yargs, d3, demos) {
     persist: function () {
       if (window.localStorage) {
         window.localStorage.setItem('git-viz-snapshot', JSON.stringify(this.undoHistory))
+      }
+    },
+
+    getRepoView: function () {
+      if (this.mode === 'local') {
+        return this.historyView
+      } else if (this.mode === 'origin') {
+        return this.originView
+      } else {
+        throw new Error('invalid mode: ' + this.mode)
+      }
+    },
+
+    changeMode: function (mode) {
+      console.log(mode)
+      if (mode === 'local' && this.historyView) {
+        this.mode = 'local'
+      } else if (mode === 'remote' && this.originView) {
+        this.mode = 'origin'
+      } else {
+        throw new Error('invalid mode: ' + mode)
       }
     },
 
@@ -203,6 +226,12 @@ function(_yargs, d3, demos) {
 
       document.getElementById('last-command').textContent = entry
 
+      if (entry.trim().toLowerCase().indexOf('mode ') === 0) {
+        var mode = entry.trim().split(' ').pop().trim()
+        this.changeMode(mode)
+        return
+      }
+
       if (entry.trim().toLowerCase() === 'undo') {
         var lastId = this.undoHistory.pointer - 1
         var lastState = this.undoHistory.stack[lastId]
@@ -288,12 +317,12 @@ function(_yargs, d3, demos) {
     },
 
     transact: function(action, after) {
-      var oldCommit = this.historyView.getCommit('HEAD')
-      var oldBranch = this.historyView.currentBranch
+      var oldCommit = this.getRepoView().getCommit('HEAD')
+      var oldBranch = this.getRepoView().currentBranch
       var oldRef = oldBranch || oldCommit.id
       action.call(this)
-      var newCommit = this.historyView.getCommit('HEAD')
-      var newBranch = this.historyView.currentBranch
+      var newCommit = this.getRepoView().getCommit('HEAD')
+      var newBranch = this.getRepoView().currentBranch
       var newRef = newBranch || newCommit.id
       after.call(this, {
         commit: oldCommit,
@@ -314,17 +343,17 @@ function(_yargs, d3, demos) {
       var msg = ""
       this.transact(function() {
         if (opts.amend) {
-          this.historyView.amendCommit(opts.m || this.historyView.getCommit('head').message)
+          this.getRepoView().amendCommit(opts.m || this.getRepoView().getCommit('head').message)
         } else {
-          this.historyView.commit(null, opts.m);
+          this.getRepoView().commit(null, opts.m);
         }
       }, function(before, after) {
         var reflogMsg = 'commit: ' + msg
-        this.historyView.addReflogEntry(
+        this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id, reflogMsg
         )
         if(before.branch) {
-          this.historyView.addReflogEntry(
+          this.getRepoView().addReflogEntry(
             before.branch, after.commit.id, reflogMsg
           )
         }
@@ -335,14 +364,14 @@ function(_yargs, d3, demos) {
       if (args.length > 1) {
         return this.error("'git log' can take at most one argument in this tool")
       }
-      var logs = this.historyView.getLogEntries(args[0] || 'head')
+      var logs = this.getRepoView().getLogEntries(args[0] || 'head')
         .map(l => `<span class='log-entry'>&gt; ${l}</span>`).join('')
       this.info(logs)
     },
 
     rev_parse: function(args) {
       args.forEach(function(arg) {
-        this.info(this.historyView.revparse(arg))
+        this.info(this.getRepoView().revparse(arg))
       }, this)
     },
 
@@ -363,7 +392,7 @@ function(_yargs, d3, demos) {
 
       // FIXME: because `cherryPick` is asynchronous,
       // it is responsible for its own reflog entries
-      this.historyView.cherryPick(opt._, opt.m);
+      this.getRepoView().cherryPick(opt._, opt.m);
     },
 
     branch: function(args, options, cmdStr) {
@@ -375,7 +404,7 @@ function(_yargs, d3, demos) {
       var startPoint = options._[1] || 'head'
 
       if (options.delete) {
-        return this.historyView.deleteBranch(options.delete);
+        return this.getRepoView().deleteBranch(options.delete);
       }
 
       if (options.remote) {
@@ -391,16 +420,16 @@ function(_yargs, d3, demos) {
       }
 
       if (!branchName) {
-        var branches = this.historyView.getBranchList().join('<br>')
+        var branches = this.getRepoView().getBranchList().join('<br>')
         return this.info(branches)
       }
 
       this.transact(function() {
-        this.historyView.branch(branchName, startPoint)
+        this.getRepoView().branch(branchName, startPoint)
       }, function(before, after) {
-        var branchCommit = this.historyView.getCommit(branchName)
+        var branchCommit = this.getRepoView().getCommit(branchName)
         var reflogMsg = "branch: created from " + before.ref
-        this.historyView.addReflogEntry(branchName, branchCommit.id, reflogMsg)
+        this.getRepoView().addReflogEntry(branchName, branchCommit.id, reflogMsg)
       })
 
     },
@@ -417,9 +446,9 @@ function(_yargs, d3, demos) {
       var name = opts.b || opts._[0]
 
       this.transact(function() {
-        this.historyView.checkout(name);
+        this.getRepoView().checkout(name);
       }, function(before, after) {
-        this.historyView.addReflogEntry(
+        this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id,
           'checkout: moving from ' + before.ref +
           ' to ' + name
@@ -442,7 +471,7 @@ function(_yargs, d3, demos) {
         var arg = args.shift();
 
         try {
-          this.historyView.tag(arg);
+          this.getRepoView().tag(arg);
         } catch (err) {
           if (err.message.indexOf('already exists') === -1) {
             throw new Error(err.message);
@@ -453,14 +482,14 @@ function(_yargs, d3, demos) {
 
     doReset: function (name) {
       this.transact(function() {
-        this.historyView.reset(name);
+        this.getRepoView().reset(name);
       }, function(before, after) {
         var reflogMsg = "reset: moving to " + name
-        this.historyView.addReflogEntry(
+        this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id, reflogMsg
         )
         if (before.branch) {
-          this.historyView.addReflogEntry(
+          this.getRepoView().addReflogEntry(
             before.branch, after.commit.id, reflogMsg
           )
         }
@@ -519,14 +548,14 @@ function(_yargs, d3, demos) {
       }
 
       this.transact(function() {
-        this.historyView.revert(opt._, opt.m);
+        this.getRepoView().revert(opt._, opt.m);
       }, function(before, after) {
         var reflogMsg = 'revert: ' + before.commit.message || before.commit.id
-        this.historyView.addReflogEntry(
+        this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id, reflogMsg
         )
         if(before.branch) {
-          this.historyView.addReflogEntry(
+          this.getRepoView().addReflogEntry(
             before.branch, after.commit.id, reflogMsg
           )
         }
@@ -550,7 +579,7 @@ function(_yargs, d3, demos) {
       }
 
       this.transact(function() {
-        result = this.historyView.merge(branch, noFF);
+        result = this.getRepoView().merge(branch, noFF);
 
         if (result === 'Fast-Forward') {
           this.info('You have performed a fast-forward merge.');
@@ -562,11 +591,11 @@ function(_yargs, d3, demos) {
         } else {
           reflogMsg += "Merge made by the 'recursive' strategy."
         }
-        this.historyView.addReflogEntry(
+        this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id, reflogMsg
         )
         if (before.branch) {
-          this.historyView.addReflogEntry(
+          this.getRepoView().addReflogEntry(
             before.branch, after.commit.id, reflogMsg
           )
         }
@@ -575,7 +604,7 @@ function(_yargs, d3, demos) {
 
     rebase: function(args) {
       var ref = args.shift(),
-        result = this.historyView.rebase(ref);
+        result = this.getRepoView().rebase(ref);
 
       // FIXME: rebase is async, so manages its own
       // reflog entries
@@ -585,6 +614,9 @@ function(_yargs, d3, demos) {
     },
 
     fetch: function() {
+      if (this.mode !== 'local') {
+        throw new Error('can only fetch from local')
+      }
       if (!this.originView) {
         throw new Error('There is no remote server to fetch from.');
       }
@@ -651,6 +683,9 @@ function(_yargs, d3, demos) {
     },
 
     pull: function(args) {
+      if (this.mode !== 'local') {
+        throw new Error('can only pull from local')
+      }
       var control = this,
         local = this.historyView,
         currentBranch = local.currentBranch,
@@ -688,6 +723,9 @@ function(_yargs, d3, demos) {
     },
 
     push: function(args) {
+      if (this.mode !== 'local') {
+        throw new Error('can only push from local')
+      }
       var control = this,
         local = this.historyView,
         remoteName = args.shift() || 'origin',
@@ -786,7 +824,7 @@ function(_yargs, d3, demos) {
 
     reflog: function (args) {
       var reflogExistsFor = function (ref) {
-        return this.historyView.logs[ref.toLowerCase()]
+        return this.getRepoView().logs[ref.toLowerCase()]
       }.bind(this)
 
       var ref = ""
@@ -819,7 +857,7 @@ function(_yargs, d3, demos) {
           this.error("Reflog for ref " + ref + " does not exist")
         }
       } else if (subcommand === "show") {
-        var logs = this.historyView.getReflogEntries(ref)
+        var logs = this.getRepoView().getReflogEntries(ref)
         this.info(
           logs.map(l => `<span class='reflog-entry'>&gt; ${l}</span>`).join('')
         )
