@@ -805,7 +805,7 @@ function(_yargs, d3, demos) {
         findCommitsToPush(localCommit);
 
         remote.commitData = remote.commitData.concat(toPush);
-        remote.moveTag(remoteRef, toPush[toPush.length - 1].id);
+        remote.moveTag(remoteRef, localCommit.id);
         local.moveTag('origin/' + localRef, localRef)
         remote.renderCommits();
         local.renderTags()
