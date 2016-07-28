@@ -226,6 +226,11 @@ function(_yargs, d3, demos) {
 
       document.getElementById('last-command').textContent = entry
 
+      if (entry.trim() === 'pres()') {
+        window.pres()
+        return
+      }
+
       if (entry.trim().toLowerCase().indexOf('mode ') === 0) {
         var mode = entry.trim().split(' ').pop().trim()
         this.changeMode(mode)
@@ -658,7 +663,7 @@ function(_yargs, d3, demos) {
 
       for (fb in fetchBranches) {
         if (origin.branches.indexOf(fb) > -1) {
-          checkCommit(origin.getCommit(fb))
+          checkCommit(origin.getCommit(fb), fb)
         }
       }
 
