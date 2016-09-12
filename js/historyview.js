@@ -1475,7 +1475,7 @@ define(['d3'], function() {
               this.reset(origBranch)
               this._setCurrentBranch(origBranch)
               this.addReflogEntry(
-                'HEAD', targetCommit.id, 'rebase finished: returning to resf/heads/' + origBranch
+                'HEAD', this.getCommit('HEAD').id, 'rebase finished: returning to resf/heads/' + origBranch
               )
               this.addReflogEntry(
                 origBranch, newHeadCommit.id, 'rebase finished: refs/heads/' +
