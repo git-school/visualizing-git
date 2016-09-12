@@ -800,7 +800,7 @@ function(_yargs, d3, demos) {
       // push to an existing branch on the remote
       if (remoteCommit && remote.branches.indexOf(remoteRef) > -1) {
         if (!local.isAncestorOf(remoteCommit.id, localCommit.id) && !opt.f) {
-          throw new Error('Push rejected. Non fast-forward.');
+          throw new Error('Push rejected. Non fast-forward. Try pulling first');
         }
 
         isCommonCommit = localCommit.id === remoteCommit.id;
