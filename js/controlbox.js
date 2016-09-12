@@ -733,15 +733,20 @@ function(_yargs, d3, demos) {
       }.bind(this), 750);
     },
 
-    push: function(args) {
+    push: function(args, opts, cmdStr) {
+      var opt = yargs(cmdStr, {
+        alias: { force: ['f'] },
+        boolean: ['f']
+      })
+
       if (this.mode !== 'local') {
         throw new Error('can only push from local')
       }
       var control = this,
         local = this.historyView,
-        remoteName = args.shift() || 'origin',
+        remoteName = opt._[0] || 'origin',
         remote = this[remoteName + 'View'],
-        branchArgs = args.pop(),
+        branchArgs = opt._[1],
         localRef = local.currentBranch,
         remoteRef = local.currentBranch,
         localCommit, remoteCommit,
@@ -794,7 +799,7 @@ function(_yargs, d3, demos) {
 
       // push to an existing branch on the remote
       if (remoteCommit && remote.branches.indexOf(remoteRef) > -1) {
-        if (!local.isAncestorOf(remoteCommit.id, localCommit.id)) {
+        if (!local.isAncestorOf(remoteCommit.id, localCommit.id) && !opt.f) {
           throw new Error('Push rejected. Non fast-forward.');
         }
 
@@ -804,9 +809,21 @@ function(_yargs, d3, demos) {
           return this.info('Everything up-to-date.');
         }
 
-        findCommitsToPush(localCommit);
+        if (!opt.f) {
+          findCommitsToPush(localCommit);
+          remote.commitData = remote.commitData.concat(toPush);
+        } else {
+          var localData = JSON.parse(JSON.stringify(local.commitData))
+          localData.forEach(function(commit) {
+            var originTagIndex = commit.tags.indexOf('origin/' + localRef)
+            if (originTagIndex > -1) {
+              commit.tags.splice(originTagIndex, 1)
+            }
+          })
+          remote.commitData = localData
+          this.info('forced update')
+        }
 
-        remote.commitData = remote.commitData.concat(toPush);
         remote.moveTag(remoteRef, localCommit.id);
         local.moveTag('origin/' + localRef, localRef)
         remote.renderCommits();
