@@ -309,7 +309,7 @@ define(['d3'], function() {
         this.commitData = data.commitData
         this.branches = data.branches
         this.logs = data.logs
-        this.currentBranch = data.currentBranch
+        this._setCurrentBranch(data.currentBranch || null)
         this.renderCommits()
         this.renderTags()
       }
