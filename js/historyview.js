@@ -1464,7 +1464,11 @@ define(['d3'], function() {
       setTimeout(function() {
         this.flashProperty(commitsToCopy, 'rebased', function() {
           commitsToCopy.forEach(function(ref) {
-            this.commit({rebased: true, rebaseSource: ref}, this.getCommit(ref).message)
+            var oldCommit = this.getCommit(ref)
+            this.commit({rebased: true, rebaseSource: ref}, oldCommit.message)
+              this.addReflogEntry(
+                'HEAD', this.getCommit('HEAD').id, 'rebase: ' + (oldCommit.message || oldCommit.id)
+              )
           }, this)
           var newHeadCommit = this.getCommit('HEAD')
           this.lock()
