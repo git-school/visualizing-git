@@ -26,7 +26,7 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
         name: name + '-Origin',
         width: 300,
         height: 400,
-        commitRadius: 15,
+        commitRadius: args.commitRadius,
         remoteName: 'origin',
         commitData: args.originData,
         savedState: args.ovSavedState
