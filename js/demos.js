@@ -250,80 +250,98 @@ define([], function () {
         "message": "first commit",
         "parent": "initial",
         "cx": 50,
-        "cy": 330,
+        "cy": 318,
         "branchless": false
       },
       {
-        "id": "1453f27",
+        "id": "790dd94",
         "tags": [],
         "parent": "e137e9b",
         "cx": 140,
-        "cy": 330,
+        "cy": 318,
         "branchless": false
       },
       {
-        "id": "89613dc",
-        "tags": [],
-        "parent": "1453f27",
-        "cx": 230,
-        "cy": 330,
-        "branchless": false
-      },
-      {
-        "id": "378e507",
-        "tags": [ "[bugfix2]" ],
-        "parent": "89613dc",
-        "cx": 320,
-        "cy": 330,
-        "branchless": false
-      },
-      {
-        "id": "0fdc964",
-        "tags": [],
-        "parent": "89613dc",
-        "cx": 320,
-        "cy": 240,
-        "branchless": false
-      },
-      {
-        "id": "e2c97ff",
+        "id": "96e9ce7",
         "tags": [
-          "bugfix"
+          "[bugfix1]"
         ],
-        "parent": "0fdc964",
+        "parent": "790dd94",
+        "cx": 230,
+        "cy": 318,
+        "branchless": false
+      },
+      {
+        "id": "44db644",
+        "tags": [],
+        "parent": "96e9ce7",
+        "cx": 320,
+        "cy": 318,
+        "branchless": false
+      },
+      {
+        "id": "06127d7",
+        "tags": [],
+        "parent": "44db644",
         "cx": 410,
-        "cy": 240,
+        "cy": 318,
         "branchless": false
       },
       {
-        "id": "7561647",
+        "id": "60c6c2c",
         "tags": [],
-        "parent": "1453f27",
+        "parent": "790dd94",
         "cx": 230,
-        "cy": 240,
+        "cy": 228,
         "branchless": false
       },
       {
-        "id": "af18be0",
+        "id": "8f7c801",
         "tags": [
-          "release"
-        ],
-        "parent": "7561647",
-        "cx": 320,
-        "cy": 150,
-        "branchless": false
-      },
-      {
-        "parent2": "e2c97ff",
-        "id": "37b7579",
-        "tags": [
-          "master",
+          "release",
           "HEAD"
         ],
-        "message": "Merge",
-        "parent": "378e507",
+        "parent": "60c6c2c",
+        "cx": 320,
+        "cy": 228,
+        "branchless": false
+      },
+      {
+        "id": "78ecb32",
+        "tags": [],
+        "parent": "44db644",
+        "cx": 410,
+        "cy": 228,
+        "branchless": false
+      },
+      {
+        "id": "12e9bbb",
+        "tags": [
+          "bugfix2"
+        ],
+        "parent": "78ecb32",
         "cx": 500,
-        "cy": 330,
+        "cy": 228,
+        "branchless": false
+      },
+      {
+        "id": "e8ce346",
+        "tags": [],
+        "parent": "06127d7",
+        "cx": 500,
+        "cy": 318,
+        "branchless": false
+      },
+      {
+        "parent2": "12e9bbb",
+        "id": "5749661",
+        "tags": [
+          "master"
+        ],
+        "message": "Merge",
+        "parent": "e8ce346",
+        "cx": 590,
+        "cy": 318,
         "branchless": false
       }
     ]
