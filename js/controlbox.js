@@ -229,6 +229,9 @@ function(_yargs, d3, demos) {
       if (entry.trim() === 'help' || entry.trim() === 'help()') {
         this.info('pres() = Turn on presenter mode')
         this.info('undo = Undo the last git command')
+        this.info('redo = Redo the last undone git command')
+        this.info('mode = Change mode')
+        this.info('clear = Clear the history pane and reset the visualization')
         this.info()
         this.info('Available Git Commands:')
         this.info('`git branch`')
