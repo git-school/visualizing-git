@@ -370,7 +370,9 @@ function(_yargs, d3, demos) {
         return this.error("'git log' can take at most one argument in this tool")
       }
       var logs = this.getRepoView().getLogEntries(args[0] || 'head')
-        .map(l => `<span class='log-entry'>&gt; ${l}</span>`).join('')
+        .map(function(l) {
+          return "<span class='log-entry'>&gt; " + l + "</span>"
+        }).join('')
       this.info(logs)
     },
 
@@ -878,7 +880,9 @@ function(_yargs, d3, demos) {
       } else if (subcommand === "show") {
         var logs = this.getRepoView().getReflogEntries(ref)
         this.info(
-          logs.map(l => `<span class='reflog-entry'>&gt; ${l}</span>`).join('')
+          logs.map(function(l) {
+            return "<span class='reflog-entry'>&gt; " + l + "</span>"
+          }).join('')
         )
       } else if (subcommand === "expire" || subcommand === "delete") {
         this.info("Real git reflog supports the '" + subcommand +

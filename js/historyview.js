@@ -844,6 +844,12 @@ define(['d3'], function() {
       return tagData;
     },
 
+    _walkCommit: function (commit) {
+      commit.branchless = false
+      commit.parent && this._walkCommit(this.getCommit(commit.parent))
+      commit.parent2 && this._walkCommit(this.getCommit(commit.parent2))
+    },
+
     _markBranchlessCommits: function() {
       var branch, commit, parent, parent2, c, b;
 
@@ -859,13 +865,7 @@ define(['d3'], function() {
           parent = this.getCommit(commit.parent);
           parent2 = this.getCommit(commit.parent2);
 
-          function walkCommit (commit) {
-            commit.branchless = false
-            commit.parent && walkCommit.call(this, this.getCommit(commit.parent))
-            commit.parent2 && walkCommit.call(this, this.getCommit(commit.parent2))
-          }
-
-          walkCommit.call(this, commit)
+          this._walkCommit(commit)
         }
       }
 
