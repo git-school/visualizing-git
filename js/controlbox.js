@@ -226,6 +226,31 @@ function(_yargs, d3, demos) {
 
       document.getElementById('last-command').textContent = entry
 
+      if (entry.trim() === 'help' || entry.trim() === 'help()') {
+        this.info('pres() = Turn on presenter mode')
+        this.info('undo = Undo the last git command')
+        this.info()
+        this.info('Available Git Commands:')
+        this.info('`git branch`')
+        this.info('`git checkout`')
+        this.info('`git cherry_pick`')
+        this.info('`git clean`')
+        this.info('`git commit`')
+        this.info('`git config`')
+        this.info('`git fetch`')
+        this.info('`git log`')
+        this.info('`git merge`')
+        this.info('`git pull`')
+        this.info('`git push`')
+        this.info('`git rebase`')
+        this.info('`git reflog`')
+        this.info('`git reset`')
+        this.info('`git rev_parse`')
+        this.info('`git revert`')
+        this.info('`git tag`')
+        return
+      }
+
       if (entry.trim() === 'pres()') {
         window.pres()
         return
