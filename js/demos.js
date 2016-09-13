@@ -175,10 +175,10 @@ define([], function () {
 
   }
 
-  var cherryPick = {
-    title: 'Cherry Picking',
-    key: 'cherry',
-    message: 'Let\'s pick some commits',
+  var mainline = {
+    title: 'Mainline',
+    key: 'mainline',
+    message: 'Let\'s pick and revert some commits',
     commitData: [
       {
         "id": "e137e9b",
@@ -208,12 +208,12 @@ define([], function () {
       },
       {
         "id": "6f5b3a4",
-        "tags": [],
+        "tags": [ "[fix]" ],
         "parent": "a17ad66"
       },
       {
         "id": "f6089f6",
-        "tags": [ "feature" ],
+        "tags": [],
         "parent": "6f5b3a4"
       },
       {
@@ -228,13 +228,13 @@ define([], function () {
       },
       {
         "id": "ab103f6",
-        "tags": [],
+        "tags": [ "feature" ],
         "parent": "c681e06"
       },
       {
         "parent": "f6089f6",
         "id": "571f0d3",
-        "tags": [ "merged" ],
+        "tags": [ "development" ],
         "message": "Merge",
         "parent2": "ab103f6"
       }
@@ -251,6 +251,6 @@ define([], function () {
   }
 
   return [
-    free, freeWithRemote, upstreamChanges, rewrittenHistory, cherryPick
+    free, freeWithRemote, upstreamChanges, rewrittenHistory, mainline
   ]
 })
