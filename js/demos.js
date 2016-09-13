@@ -175,68 +175,156 @@ define([], function () {
 
   }
 
-  var mainline = {
-    title: 'Mainline',
-    key: 'mainline',
-    message: 'Let\'s pick and revert some commits',
+  var revert = {
+    title: 'Revert',
+    key: 'revert',
+    message: 'Oops, let\'s revert some commits',
     commitData: [
       {
         "id": "e137e9b",
         "tags": [],
         "message": "first commit",
-        "parent": "initial"
+        "parent": "initial",
+        "cx": 50,
+        "cy": 330,
+        "branchless": false
       },
       {
-        "id": "78cc3bd",
+        "id": "dd70cfe",
         "tags": [],
-        "parent": "e137e9b"
+        "parent": "e137e9b",
+        "cx": 140,
+        "cy": 330,
+        "branchless": false
       },
       {
-        "id": "aaad8c8",
-        "tags": [ "master", "HEAD" ],
-        "parent": "78cc3bd"
-      },
-      {
-        "id": "157e15d",
+        "id": "2545b6f",
         "tags": [],
-        "parent": "78cc3bd"
+        "parent": "dd70cfe",
+        "cx": 230,
+        "cy": 330,
+        "branchless": false
       },
       {
-        "id": "a17ad66",
+        "id": "3d6ef16",
         "tags": [],
-        "parent": "157e15d"
+        "parent": "dd70cfe",
+        "cx": 230,
+        "cy": 240,
+        "branchless": false
       },
       {
-        "id": "6f5b3a4",
-        "tags": [ "[fix]" ],
-        "parent": "a17ad66"
+        "id": "077415f",
+        "tags": [
+          "feature"
+        ],
+        "parent": "3d6ef16",
+        "cx": 320,
+        "cy": 240,
+        "branchless": false
       },
       {
-        "id": "f6089f6",
-        "tags": [],
-        "parent": "6f5b3a4"
-      },
-      {
-        "id": "0da258b",
-        "tags": [],
-        "parent": "157e15d"
-      },
-      {
-        "id": "c681e06",
-        "tags": [],
-        "parent": "0da258b"
-      },
-      {
-        "id": "ab103f6",
-        "tags": [ "feature" ],
-        "parent": "c681e06"
-      },
-      {
-        "parent": "f6089f6",
-        "id": "571f0d3",
-        "tags": [ "development" ],
+        "parent2": "077415f",
+        "id": "8686fb6",
+        "tags": [
+          "master",
+          "HEAD"
+        ],
         "message": "Merge",
-        "parent2": "ab103f6"
+        "parent": "2545b6f",
+        "cx": 410,
+        "cy": 330,
+        "branchless": false
+      }
+    ]
+  }
+
+  var cherryPick = {
+    title: 'Cherry Pick',
+    key: 'cherry pick',
+    message: 'Let\'s pick some commits',
+    commitData: [
+      {
+        "id": "e137e9b",
+        "tags": [],
+        "message": "first commit",
+        "parent": "initial",
+        "cx": 50,
+        "cy": 330,
+        "branchless": false
+      },
+      {
+        "id": "1453f27",
+        "tags": [],
+        "parent": "e137e9b",
+        "cx": 140,
+        "cy": 330,
+        "branchless": false
+      },
+      {
+        "id": "89613dc",
+        "tags": [],
+        "parent": "1453f27",
+        "cx": 230,
+        "cy": 330,
+        "branchless": false
+      },
+      {
+        "id": "378e507",
+        "tags": [ "[bugfix2]" ],
+        "parent": "89613dc",
+        "cx": 320,
+        "cy": 330,
+        "branchless": false
+      },
+      {
+        "id": "0fdc964",
+        "tags": [],
+        "parent": "89613dc",
+        "cx": 320,
+        "cy": 240,
+        "branchless": false
+      },
+      {
+        "id": "e2c97ff",
+        "tags": [
+          "bugfix"
+        ],
+        "parent": "0fdc964",
+        "cx": 410,
+        "cy": 240,
+        "branchless": false
+      },
+      {
+        "id": "7561647",
+        "tags": [],
+        "parent": "1453f27",
+        "cx": 230,
+        "cy": 240,
+        "branchless": false
+      },
+      {
+        "id": "af18be0",
+        "tags": [
+          "release"
+        ],
+        "parent": "7561647",
+        "cx": 320,
+        "cy": 150,
+        "branchless": false
+      },
+      {
+        "parent2": "e2c97ff",
+        "id": "37b7579",
+        "tags": [
+          "master",
+          "HEAD"
+        ],
+        "message": "Merge",
+        "parent": "378e507",
+        "cx": 500,
+        "cy": 330,
+        "branchless": false
       }
     ]
   }
@@ -251,6 +339,6 @@ define([], function () {
   }
 
   return [
-    free, freeWithRemote, upstreamChanges, rewrittenHistory, mainline
+    free, freeWithRemote, upstreamChanges, rewrittenHistory, revert, cherryPick
   ]
 })
