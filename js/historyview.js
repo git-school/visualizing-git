@@ -1425,11 +1425,12 @@ define(['d3'], function() {
             }
         }
 
-        branchStartCommit.isNoFFBranch = true;
+        branchStartCommit.isNoFFBranch = false;
 
+        console.dir(mergeTarget);
         this.commit({
           parent2: mergeTarget.id,
-          isNoFFCommit: true
+        //   isNoFFCommit: true
         }, 'Merge');
       } else if (this.isAncestorOf(currentCommit.id, mergeTarget.id)) {
         this.fastForward(mergeTarget);
