@@ -737,8 +737,8 @@ function(_yargs, d3, demos) {
 
     push: function(args, opts, cmdStr) {
       var opt = yargs(cmdStr, {
-        alias: { force: ['f'] },
-        boolean: ['f']
+        alias: { force: ['f'], upstream: ['u'] },
+        boolean: ['f', 'u']
       })
 
       if (this.mode !== 'local') {
