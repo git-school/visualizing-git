@@ -926,7 +926,7 @@ define(['d3'], function() {
 
       newTags.append('svg:rect')
         .attr('width', function(d) {
-          return (d.name.length * 6) + 10;
+          return (d.name.length * 8) + 20;
         })
         .attr('height', 20)
         .attr('y', function(d) {

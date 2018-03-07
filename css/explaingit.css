@@ -304,7 +304,7 @@ g.branch-tag.remote-branch > rect {
 g.branch-tag > text {
   text-anchor: middle;
   fill: #000;
-  font-size: 11px;
+  font-size: 15px;
   font-family: Arial;
 }
 
@@ -317,7 +317,7 @@ g.head-tag > rect {
 g.head-tag > text {
   text-anchor: middle;
   fill: #000;
-  font-size: 11px;
+  font-size: 15px;
   font-family: Arial;
   font-weight: bold;
   text-transform: uppercase;
