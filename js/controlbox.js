@@ -231,7 +231,7 @@ function(_yargs, d3, demos) {
         this.info('pres() = Turn on presenter mode')
         this.info('undo = Undo the last git command')
         this.info('redo = Redo the last undone git command')
-        this.info('mode = Change mode')
+        this.info('mode = Change mode (`local` or `remote`)')
         this.info('clear = Clear the history pane and reset the visualization')
         this.info()
         this.info('Available Git Commands:')
