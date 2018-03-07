@@ -844,6 +844,12 @@ define(['d3'], function() {
       return tagData;
     },
 
+    _walkCommit: function (commit) {
+      commit.branchless = false
+      commit.parent && this._walkCommit(this.getCommit(commit.parent))
+      commit.parent2 && this._walkCommit(this.getCommit(commit.parent2))
+    },
+
     _markBranchlessCommits: function() {
       var branch, commit, parent, parent2, c, b;
 
@@ -859,13 +865,7 @@ define(['d3'], function() {
           parent = this.getCommit(commit.parent);
           parent2 = this.getCommit(commit.parent2);
 
-          function walkCommit (commit) {
-            commit.branchless = false
-            commit.parent && walkCommit.call(this, this.getCommit(commit.parent))
-            commit.parent2 && walkCommit.call(this, this.getCommit(commit.parent2))
-          }
-
-          walkCommit.call(this, commit)
+          this._walkCommit(commit)
         }
       }
 
@@ -926,7 +926,7 @@ define(['d3'], function() {
 
       newTags.append('svg:rect')
         .attr('width', function(d) {
-          return (d.name.length * 6) + 10;
+          return (d.name.length * 8) + 20;
         })
         .attr('height', 20)
         .attr('y', function(d) {
@@ -1479,7 +1479,7 @@ define(['d3'], function() {
               this.reset(origBranch)
               this._setCurrentBranch(origBranch)
               this.addReflogEntry(
-                'HEAD', this.getCommit('HEAD').id, 'rebase finished: returning to resf/heads/' + origBranch
+                'HEAD', this.getCommit('HEAD').id, 'rebase finished: returning to refs/heads/' + origBranch
               )
               this.addReflogEntry(
                 origBranch, newHeadCommit.id, 'rebase finished: refs/heads/' +

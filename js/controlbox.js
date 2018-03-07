@@ -227,6 +227,32 @@ function(_yargs, d3, demos) {
 
       document.getElementById('last-command').textContent = entry
 
+      if (entry.trim() === 'help' || entry.trim() === 'help()') {
+        this.info('pres() = Turn on presenter mode')
+        this.info('undo = Undo the last git command')
+        this.info('redo = Redo the last undone git command')
+        this.info('mode = Change mode')
+        this.info('clear = Clear the history pane and reset the visualization')
+        this.info()
+        this.info('Available Git Commands:')
+        this.info('`git branch`')
+        this.info('`git checkout`')
+        this.info('`git cherry_pick`')
+        this.info('`git commit`')
+        this.info('`git fetch`')
+        this.info('`git log`')
+        this.info('`git merge`')
+        this.info('`git pull`')
+        this.info('`git push`')
+        this.info('`git rebase`')
+        this.info('`git reflog`')
+        this.info('`git reset`')
+        this.info('`git rev_parse`')
+        this.info('`git revert`')
+        this.info('`git tag`')
+        return
+      }
+
       if (entry === 'pres()') {
         window.pres()
         return
@@ -371,7 +397,9 @@ function(_yargs, d3, demos) {
         return this.error("'git log' can take at most one argument in this tool")
       }
       var logs = this.getRepoView().getLogEntries(args[0] || 'head')
-        .map(l => `<span class='log-entry'>&gt; ${l}</span>`).join('')
+        .map(function(l) {
+          return "<span class='log-entry'>&gt; " + l + "</span>"
+        }).join('')
       this.info(logs)
     },
 
@@ -879,7 +907,9 @@ function(_yargs, d3, demos) {
       } else if (subcommand === "show") {
         var logs = this.getRepoView().getReflogEntries(ref)
         this.info(
-          logs.map(l => `<span class='reflog-entry'>&gt; ${l}</span>`).join('')
+          logs.map(function(l) {
+            return "<span class='reflog-entry'>&gt; " + l + "</span>"
+          }).join('')
         )
       } else if (subcommand === "expire" || subcommand === "delete") {
         this.info("Real git reflog supports the '" + subcommand +
