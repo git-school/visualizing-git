@@ -16,7 +16,37 @@ Here are some examples of the fun things you can do with it:
 ![cherry-pick](images/cherry-pick.gif)
 
 ## Push/pull
-![cherry-pick](images/remote.gif)
+![push-pull](images/remote.gif)
+
+## Supported operations
+
+Type `help` in the command box to see a list of supported operations
+
+`pres()` = Turn on presenter mode<br>
+`undo` = Undo the last git command<br>
+`redo` = Redo the last undone git command<br>
+`mode` = Change mode (`local` or `remote`)<br>
+`clear` = Clear the history pane and reset the visualization
+
+Available Git Commands:
+```
+git branch
+git checkout
+git cherry_pick
+git commit
+git fetch
+git log
+git merge
+git pull
+git push
+git rebase
+git reflog
+git reset
+git rev_parse
+git revert
+git tag
+```
+
 
 We hope you find this tool useful! Issues and pull requests are welcome! Enjoy! :sparkles:
 
