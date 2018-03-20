@@ -159,7 +159,7 @@ span.cmd {
   text-indent: -15px;
 }
 
-.control-box .log, .control-box input[type="text"], .control-box .input {
+.control-box .log, .control-box textarea, .control-box .input {
   font-family: Courier New;
   font-size: 14px;
 }
@@ -171,10 +171,15 @@ span.cmd {
   background: url(../images/prompt.gif) no-repeat left top black;
 }
 
-.control-box input[type="text"] {
+.control-box textarea {
   position: absolute;
   bottom: 0;
   padding-left: 15px;
+  padding-top: 2px;
+  padding-right: 0px;
+  padding-bottom: 2px;
+  overflow: hidden;
+  resize: none;
   color: #FFF;
   line-height: 14px;
   background: url(../images/prompt.gif) no-repeat left center black;
@@ -193,7 +198,7 @@ span.cmd {
   color: #FCC;
 }
 
-.control-box input[type="text"] {
+.control-box textarea {
   width: 235px;
   border: none;
 }
