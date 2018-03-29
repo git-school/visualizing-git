@@ -183,6 +183,7 @@ span.cmd {
   color: #FFF;
   line-height: 14px;
   background: url(../images/prompt.gif) no-repeat left center black;
+  white-space: nowrap;
 }
 
 .control-box .log .info, .control-box .log .error {
