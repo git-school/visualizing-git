@@ -359,6 +359,17 @@ define(['d3'], function() {
       }
     },
 
+    matchesTag: function matchesTag(ref, type, tag) {
+      const short = type + "/" + tag
+      const long = "refs/" + short
+
+      if (ref === tag || ref === short || ref === long) {
+        return true
+      }
+
+      return false
+    },
+
     /**
      * @method getCommit
      * @param ref {String} the id or a tag name that refers to the commit
@@ -406,6 +417,7 @@ define(['d3'], function() {
         throw new Error("Ref " + ref + " is ambiguous")
       }
 
+      var matchesTag = this.matchesTag
       for (var i = 0; i < commitData.length; i++) {
         var commit = commitData[i];
         if (commit === ref) {
@@ -421,18 +433,19 @@ define(['d3'], function() {
         var matchedTag = function() {
           for (var j = 0; j < commit.tags.length; j++) {
             var tag = commit.tags[j];
-            if (tag === ref) {
+            if (matchesTag(ref, "heads", tag)) {
               matchedCommit = commit;
               return true;
             }
 
             if (tag.indexOf('[') === 0 && tag.indexOf(']') === tag.length - 1) {
               tag = tag.substring(1, tag.length - 1);
-            }
-            if (tag === ref) {
+
+              if (matchesTag(ref, "tags", tag)) {
               matchedCommit = commit;
               return true;
             }
+          }
           }
         }();
         if (matchedTag === true) {
@@ -861,7 +874,7 @@ define(['d3'], function() {
       for (b = 0; b < this.branches.length; b++) {
         branch = this.branches[b];
         if (branch.indexOf('/') === -1) {
-          commit = this.getCommit(branch);
+          commit = this.getCommit("refs/heads/" + branch);
           parent = this.getCommit(commit.parent);
           parent2 = this.getCommit(commit.parent2);
 
