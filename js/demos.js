@@ -241,7 +241,7 @@ define([], function () {
 
   var cherryPick = {
     title: 'Cherry Pick',
-    key: 'cherry pick',
+    key: 'cherry-pick',
     message: 'Let\'s pick some commits',
     commitData: [
       {
