@@ -3,7 +3,12 @@ function(_yargs, d3, demos) {
   "use strict";
 
   function yargs(str, opts) {
-    var result = _yargs(str, opts)
+    var newOpts = Object.assign({}, opts, {
+      configuration: {
+        "parse-numbers": false
+      }
+    })
+    var result = _yargs(str, newOpts)
 
     // make every value in result._ a string
     result._ = result._.map(function(val) {
