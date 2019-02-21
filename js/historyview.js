@@ -1416,15 +1416,21 @@ define(['d3'], function() {
         throw new Error('Already up-to-date.');
       } else if (noFF === true) {
         var branchStartCommit = this.getCommit(mergeTarget.parent);
-        while (branchStartCommit.parent !== currentCommit.id) {
-          branchStartCommit = this.getCommit(branchStartCommit.parent);
+        console.dir(currentCommit);
+        console.dir(branchStartCommit);
+        if (branchStartCommit !== currentCommit) {
+            while (branchStartCommit.parent !== currentCommit.id) {
+                branchStartCommit = this.getCommit(branchStartCommit.parent);
+                console.dir(branchStartCommit);
+            }
         }
 
-        branchStartCommit.isNoFFBranch = true;
+        branchStartCommit.isNoFFBranch = false;
 
+        console.dir(mergeTarget);
         this.commit({
           parent2: mergeTarget.id,
-          isNoFFCommit: true
+        //   isNoFFCommit: true
         }, 'Merge');
       } else if (this.isAncestorOf(currentCommit.id, mergeTarget.id)) {
         this.fastForward(mergeTarget);
