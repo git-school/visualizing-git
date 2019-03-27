@@ -860,7 +860,7 @@ define(['d3'], function() {
 
       for (b = 0; b < this.branches.length; b++) {
         branch = this.branches[b];
-        if (branch.indexOf('/') === -1) {
+        if (!branch.startsWith("origin/")) {
           commit = this.getCommit(branch);
           parent = this.getCommit(commit.parent);
           parent2 = this.getCommit(commit.parent2);
@@ -916,7 +916,7 @@ define(['d3'], function() {
           var classes = 'branch-tag';
           if (d.name.indexOf('[') === 0 && d.name.indexOf(']') === d.name.length - 1) {
             classes += ' git-tag';
-          } else if (d.name.indexOf('/') >= 0) {
+          } else if (d.name.startsWith("origin/")) {
             classes += ' remote-branch';
           } else if (d.name.toUpperCase() === 'HEAD') {
             classes += ' head-tag';
@@ -963,7 +963,7 @@ define(['d3'], function() {
       var display = this.svg.select('text.current-branch-display'),
         text = 'HEAD: ';
 
-      if (branch && branch.indexOf('/') === -1) {
+      if (branch && !branch.startsWith("origin/")) {
         text += branch;
         this.currentBranch = branch;
       } else {
