@@ -24,6 +24,11 @@
 </head>
 <body>
 
+<div class="mobile-tabs hidden">
+  <span class="tab-local" onclick="showLocalRepo()">Local Repository</span>
+  <span class="tab-origin" onclick="showRemoteRepo()">Origin (Remote)</span>
+</div>
+
 <div id="ExplainGitZen-Container" style="display:none">
     <div class="playground-container">
       <pre id='last-command' style='display: none;'></pre>
@@ -50,6 +55,26 @@
     </marker>
 </svg>
 
+<script type="text/javascript">
+    function initMobileTabs () {
+      var hasRemote = $('#ExplainGitZen-Origin').length > 0;
+      if(hasRemote) {
+        $('.mobile-tabs').removeClass('hidden');
+        showLocalRepo();
+      }else {
+        $('.mobile-tabs').addClass('hidden');
+        showRemoteRepo();
+      }
+    }
+
+    function showLocalRepo () {
+      $('.remote-container').addClass('hidden');
+    }
+
+    function showRemoteRepo () {
+      $('.remote-container').removeClass('hidden');
+    }
+</script>
 <script type="text/javascript">
 require(['explaingit', 'demos'], function (explainGit, demos) {
     function ready(fn) {
@@ -100,6 +125,7 @@ require(['explaingit', 'demos'], function (explainGit, demos) {
           document.getElementById('last-command').textContent = ""
           clean()
           open()
+          initMobileTabs()
         }
       }
 
