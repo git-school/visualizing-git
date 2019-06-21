@@ -25,7 +25,7 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
       originView = new HistoryView({
         name: name + '-Origin',
         width: 300,
-        height: 400,
+        height: $(window).height() * 0.3,
         commitRadius: args.commitRadius,
         remoteName: 'origin',
         commitData: args.originData,

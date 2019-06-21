@@ -133,9 +133,13 @@ function(_yargs, d3, demos) {
         .classed('log', true);
 
       input = cBoxContainer.append('input')
-        .attr('type', 'text')
-        .classed('input', true)
-        .attr('placeholder', 'enter git command');
+        .attr({
+          type: 'text',
+          placeholder: 'enter git command',
+          autocorrect: 'off',
+          autocapitalize: 'none'
+        })
+        .classed('input', true);
 
       log.on('click', function () {
         if (d3.event.target === log.node()) {
