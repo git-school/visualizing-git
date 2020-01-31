@@ -17,6 +17,7 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
     container.style('display', 'block');
 
     args.name = name;
+    args.savedState = args.hvSavedState
     historyView = new HistoryView(args);
     window.hv = historyView;
 
@@ -24,10 +25,11 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
       originView = new HistoryView({
         name: name + '-Origin',
         width: 300,
-        height: 225,
-        commitRadius: 15,
+        height: 400,
+        commitRadius: args.commitRadius,
         remoteName: 'origin',
-        commitData: args.originData
+        commitData: args.originData,
+        savedState: args.ovSavedState
       });
 
       originView.render(playground);
@@ -37,7 +39,8 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
     controlBox = new ControlBox({
       historyView: historyView,
       originView: originView,
-      initialMessage: args.initialMessage
+      initialMessage: args.initialMessage,
+      undoHistory: args.undoHistory
     });
     window.cb = controlBox;
 

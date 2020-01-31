@@ -1,5 +1,5 @@
-define(['vendor/yargs-parser', 'd3'],
-function(_yargs) {
+define(['vendor/yargs-parser', 'd3', 'demos'],
+function(_yargs, d3, demos) {
   "use strict";
 
   function yargs(str, opts) {
@@ -25,31 +25,135 @@ function(_yargs) {
     this._currentCommand = -1;
     this._tempCommand = '';
     this.rebaseConfig = {}; // to configure branches for rebase
+
+    this.undoHistory = config.undoHistory || {
+      pointer: 0,
+      stack: [
+        {
+          hv: this.historyView.serialize(),
+          ov: this.originView && this.originView.serialize()
+        }
+      ]
+    }
+
+    this.mode = 'local'
+
+    this.historyView.on('lock', this.lock.bind(this))
+    this.historyView.on('unlock', this.unlock.bind(this))
   }
 
   ControlBox.prototype = {
+    lock: function () {
+      this.locked = true
+    },
+
+    unlock: function () {
+      this.locked = false
+      this.createUndoSnapshot(true)
+    },
+
+    createUndoSnapshot: function (replace) {
+      var state = {
+        hv: this.historyView.serialize(),
+        ov: (this.originView && this.originView.serialize()) || 'null'
+      }
+      if (!replace) {
+        this.undoHistory.pointer++
+        this.undoHistory.stack.length = this.undoHistory.pointer
+        this.undoHistory.stack.push(state)
+      } else {
+        this.undoHistory.stack[this.undoHistory.pointer] = state
+      }
+
+      this.persist()
+    },
+
+    persist: function () {
+      if (window.localStorage) {
+        window.localStorage.setItem('git-viz-snapshot', JSON.stringify(this.undoHistory))
+      }
+    },
+
+    getRepoView: function () {
+      if (this.mode === 'local') {
+        return this.historyView
+      } else if (this.mode === 'origin') {
+        return this.originView
+      } else {
+        throw new Error('invalid mode: ' + this.mode)
+      }
+    },
+
+    changeMode: function (mode) {
+      console.log(mode)
+      if (mode === 'local' && this.historyView) {
+        this.mode = 'local'
+      } else if (mode === 'remote' && this.originView) {
+        this.mode = 'origin'
+      } else {
+        throw new Error('invalid mode: ' + mode)
+      }
+    },
+
     render: function(container) {
       var cBox = this,
-        cBoxContainer, log, input;
+        cBoxContainer, log, input, selector;
 
       cBoxContainer = container.append('div')
         .classed('control-box', true);
 
+      selector = cBoxContainer.append('select')
+        .classed('scenario-chooser', true)
+
+      demos.forEach(function (demo) {
+        var opt = selector.append('option')
+          .text(demo.title)
+          .attr('value', demo.key)
+        if (window.location.hash === ('#' + demo.key)) {
+          opt.attr('selected', 'selected')
+        }
+      })
+
+      selector.on('change', function () {
+        if (!confirm('This will erase your current progress. Continue?')) {
+          d3.event.preventDefault()
+          d3.event.stopPropagation()
+          selector.node().value = window.location.hash.replace(/^#/, '') || demos[0].key
+          return false
+        }
+        var currentDemo = window.location.hash
+        var sel = selector.node()
+        var newDemo = sel.options[sel.selectedIndex].value
+        if (('#' + newDemo) !== currentDemo) {
+          window.location.hash = newDemo
+        }
+      })
 
       log = cBoxContainer.append('div')
         .classed('log', true);
 
       input = cBoxContainer.append('input')
         .attr('type', 'text')
+        .classed('input', true)
         .attr('placeholder', 'enter git command');
+
+      log.on('click', function () {
+        if (d3.event.target === log.node()) {
+          input.node().focus()
+        }
+      })
+
+      setTimeout(function() {
+        input.node().focus()
+      })
 
       input.on('keyup', function() {
         var e = d3.event;
 
         switch (e.keyCode) {
           case 13:
-            if (this.value.trim() === '') {
-              break;
+            if (this.value.trim() === '' || cBox.locked) {
+              return;
             }
 
             cBox._commandHistory.unshift(this.value);
@@ -85,7 +189,10 @@ function(_yargs) {
             }
             e.stopImmediatePropagation();
             break;
+          default:
+            document.getElementById('last-command').textContent = document.querySelectorAll(".control-box .input")[0].value
         }
+
       });
 
       this.container = cBoxContainer;
@@ -113,8 +220,89 @@ function(_yargs) {
     },
 
     command: function(entry) {
-      if (entry.trim === '') {
+      entry = entry.trim()
+      if (entry === '') {
         return;
+      }
+
+      document.getElementById('last-command').textContent = entry
+
+      if (entry.trim() === 'help' || entry.trim() === 'help()') {
+        this.info('pres() = Turn on presenter mode')
+        this.info('undo = Undo the last git command')
+        this.info('redo = Redo the last undone git command')
+        this.info('mode = Change mode (`local` or `remote`)')
+        this.info('clear = Clear the history pane and reset the visualization')
+        this.info()
+        this.info('Available Git Commands:')
+        this.info('`git branch`')
+        this.info('`git checkout`')
+        this.info('`git cherry_pick`')
+        this.info('`git commit`')
+        this.info('`git fetch`')
+        this.info('`git log`')
+        this.info('`git merge`')
+        this.info('`git pull`')
+        this.info('`git push`')
+        this.info('`git rebase`')
+        this.info('`git reflog`')
+        this.info('`git reset`')
+        this.info('`git rev_parse`')
+        this.info('`git revert`')
+        this.info('`git tag`')
+        return
+      }
+
+      if (entry === 'pres()') {
+        window.pres()
+        return
+      }
+
+      if (entry.toLowerCase().indexOf('mode ') === 0) {
+        var mode = entry.split(' ').pop()
+        this.changeMode(mode)
+        return
+      }
+
+      if (entry.toLowerCase() === 'undo') {
+        var lastId = this.undoHistory.pointer - 1
+        var lastState = this.undoHistory.stack[lastId]
+        if (lastState) {
+          this.historyView.deserialize(lastState.hv)
+          this.originView && this.originView.deserialize(lastState.ov)
+          this.undoHistory.pointer = lastId
+        } else {
+          this.error("Nothing to undo")
+        }
+        this.persist()
+        this.terminalOutput.append('div')
+          .classed('command-entry', true)
+          .html(entry);
+        this._scrollToBottom();
+        return
+      }
+
+      if (entry.toLowerCase() === 'redo') {
+        var lastId = this.undoHistory.pointer + 1
+        var lastState = this.undoHistory.stack[lastId]
+        if (lastState) {
+          this.historyView.deserialize(lastState.hv)
+          this.originView && this.originView.deserialize(lastState.ov)
+          this.undoHistory.pointer = lastId
+        } else {
+          this.error("Nothing to redo")
+        }
+        this.persist()
+        this.terminalOutput.append('div')
+          .classed('command-entry', true)
+          .html(entry);
+        this._scrollToBottom();
+        return
+      }
+
+      if (entry.toLowerCase() === 'clear') {
+        window.resetVis()
+        return
       }
 
       var split = entry.split(' ');
@@ -138,6 +326,7 @@ function(_yargs) {
       try {
         if (typeof this[method] === 'function') {
           this[method](args, options, argsStr);
+          this.createUndoSnapshot()
         } else {
           this.error();
         }
@@ -160,12 +349,12 @@ function(_yargs) {
     },
 
     transact: function(action, after) {
-      var oldCommit = this.historyView.getCommit('HEAD')
-      var oldBranch = this.historyView.currentBranch
+      var oldCommit = this.getRepoView().getCommit('HEAD')
+      var oldBranch = this.getRepoView().currentBranch
       var oldRef = oldBranch || oldCommit.id
       action.call(this)
-      var newCommit = this.historyView.getCommit('HEAD')
-      var newBranch = this.historyView.currentBranch
+      var newCommit = this.getRepoView().getCommit('HEAD')
+      var newBranch = this.getRepoView().currentBranch
       var newRef = newBranch || newCommit.id
       after.call(this, {
         commit: oldCommit,
@@ -186,18 +375,17 @@ function(_yargs) {
       var msg = ""
       this.transact(function() {
         if (opts.amend) {
-          var lastCommitMessage = this.historyView.commitData[this.historyView.commitData.length - 1].message
-          this.historyView.amendCommit(opts.m || lastCommitMessage)
+          this.getRepoView().amendCommit(opts.m || this.getRepoView().getCommit('head').message)
         } else {
-          this.historyView.commit(null, opts.m);
+          this.getRepoView().commit(null, opts.m);
         }
       }, function(before, after) {
         var reflogMsg = 'commit: ' + msg
-        this.historyView.addReflogEntry(
+        this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id, reflogMsg
         )
         if(before.branch) {
-          this.historyView.addReflogEntry(
+          this.getRepoView().addReflogEntry(
             before.branch, after.commit.id, reflogMsg
           )
         }
@@ -208,13 +396,16 @@ function(_yargs) {
       if (args.length > 1) {
         return this.error("'git log' can take at most one argument in this tool")
       }
-      var logs = this.historyView.getLogEntries(args[0] || 'head').join('<br>')
+      var logs = this.getRepoView().getLogEntries(args[0] || 'head')
+        .map(function(l) {
+          return "<span class='log-entry'>&gt; " + l + "</span>"
+        }).join('')
       this.info(logs)
     },
 
     rev_parse: function(args) {
       args.forEach(function(arg) {
-        this.info(this.historyView.revparse(arg))
+        this.info(this.getRepoView().revparse(arg))
       }, this)
     },
 
@@ -223,6 +414,11 @@ function(_yargs) {
         number: ['m']
       })
 
+      if (!opt._.length) {
+        this.error('You must specify one or more commits to cherry-pick');
+        return
+      }
+
       if (opt.m !== undefined && isNaN(opt.m)) {
         this.error("switch 'm' expects a numerical value");
         return
@@ -230,7 +426,7 @@ function(_yargs) {
 
       // FIXME: because `cherryPick` is asynchronous,
       // it is responsible for its own reflog entries
-      this.historyView.cherryPick(opt._, opt.m);
+      this.getRepoView().cherryPick(opt._, opt.m);
     },
 
     branch: function(args, options, cmdStr) {
@@ -242,15 +438,7 @@ function(_yargs) {
       var startPoint = options._[1] || 'head'
 
       if (options.delete) {
-        return this.historyView.deleteBranch(options.delete);
-      }
-
-      if (options.remote) {
-        return this.info('This command normally displays all of your remote tracking branches.');
-      }
-
-      if (options.all) {
-        return this.info('This command normally displays all of your tracking branches, both remote and local.');
+        return this.getRepoView().deleteBranch(options.delete);
       }
 
       if (options._[2]) {
@@ -258,16 +446,27 @@ function(_yargs) {
       }
 
       if (!branchName) {
-        var branches = this.historyView.getBranchList().join('<br>')
+        var branches
+        if (options.remote) {
+          branches = this.getRepoView().getBranchList().filter(function (b) {
+            return b.indexOf('&nbsp; origin/') === 0
+          }).join('<br>')
+        } else if (options.all) {
+          branches = this.getRepoView().getBranchList().join('<br>')
+        } else {
+          branches = this.getRepoView().getBranchList().filter(function(b) {
+            return b.indexOf('&nbsp; origin/') !== 0
+          }).join('<br>')
+        }
         return this.info(branches)
       }
 
       this.transact(function() {
-        this.historyView.branch(branchName, startPoint)
+        this.getRepoView().branch(branchName, startPoint)
       }, function(before, after) {
-        var branchCommit = this.historyView.getCommit(branchName)
+        var branchCommit = this.getRepoView().getCommit(branchName)
         var reflogMsg = "branch: created from " + before.ref
-        this.historyView.addReflogEntry(branchName, branchCommit.id, reflogMsg)
+        this.getRepoView().addReflogEntry(branchName, branchCommit.id, reflogMsg)
       })
 
     },
@@ -284,9 +483,9 @@ function(_yargs) {
       var name = opts.b || opts._[0]
 
       this.transact(function() {
-        this.historyView.checkout(name);
+        this.getRepoView().checkout(name);
       }, function(before, after) {
-        this.historyView.addReflogEntry(
+        this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id,
           'checkout: moving from ' + before.ref +
           ' to ' + name
@@ -309,7 +508,7 @@ function(_yargs) {
         var arg = args.shift();
 
         try {
-          this.historyView.tag(arg);
+          this.getRepoView().tag(arg);
         } catch (err) {
           if (err.message.indexOf('already exists') === -1) {
             throw new Error(err.message);
@@ -320,14 +519,14 @@ function(_yargs) {
 
     doReset: function (name) {
       this.transact(function() {
-        this.historyView.reset(name);
+        this.getRepoView().reset(name);
       }, function(before, after) {
         var reflogMsg = "reset: moving to " + name
-        this.historyView.addReflogEntry(
+        this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id, reflogMsg
         )
         if (before.branch) {
-          this.historyView.addReflogEntry(
+          this.getRepoView().addReflogEntry(
             before.branch, after.commit.id, reflogMsg
           )
         }
@@ -370,21 +569,30 @@ function(_yargs) {
       this.info('Deleting all of your untracked files...');
     },
 
-    revert: function(args) {
-      if(args.length === 0) {
+    revert: function(args, opt, cmdStr) {
+      opt = yargs(cmdStr, {
+        number: ['m']
+      })
+
+      if (!opt._.length) {
         this.error('You must specify a commit to revert');
         return
       }
 
+      if (opt.m !== undefined && isNaN(opt.m)) {
+        this.error("switch 'm' expects a numerical value");
+        return
+      }
+
       this.transact(function() {
-        this.historyView.revert(args.shift());
+        this.getRepoView().revert(opt._, opt.m);
       }, function(before, after) {
         var reflogMsg = 'revert: ' + before.commit.message || before.commit.id
-        this.historyView.addReflogEntry(
+        this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id, reflogMsg
         )
         if(before.branch) {
-          this.historyView.addReflogEntry(
+          this.getRepoView().addReflogEntry(
             before.branch, after.commit.id, reflogMsg
           )
         }
@@ -408,7 +616,7 @@ function(_yargs) {
       }
 
       this.transact(function() {
-        result = this.historyView.merge(branch, noFF);
+        result = this.getRepoView().merge(branch, noFF);
 
         if (result === 'Fast-Forward') {
           this.info('You have performed a fast-forward merge.');
@@ -420,11 +628,11 @@ function(_yargs) {
         } else {
           reflogMsg += "Merge made by the 'recursive' strategy."
         }
-        this.historyView.addReflogEntry(
+        this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id, reflogMsg
         )
         if (before.branch) {
-          this.historyView.addReflogEntry(
+          this.getRepoView().addReflogEntry(
             before.branch, after.commit.id, reflogMsg
           )
         }
@@ -433,7 +641,7 @@ function(_yargs) {
 
     rebase: function(args) {
       var ref = args.shift(),
-        result = this.historyView.rebase(ref);
+        result = this.getRepoView().rebase(ref);
 
       // FIXME: rebase is async, so manages its own
       // reflog entries
@@ -443,6 +651,9 @@ function(_yargs) {
     },
 
     fetch: function() {
+      if (this.mode !== 'local') {
+        throw new Error('can only fetch from local')
+      }
       if (!this.originView) {
         throw new Error('There is no remote server to fetch from.');
       }
@@ -466,20 +677,22 @@ function(_yargs) {
       }
 
       // determine which commits the local repo is missing from the origin
+      function checkCommit (commit, branch) {
+        var notInLocal = local.getCommit(commit.id) === null
+        if (notInLocal && commit.id) {
+          if (fetchIds.indexOf(commit.id) === -1) {
+            fetchCommits.unshift(commit)
+            fetchIds.unshift(commit.id)
+          }
+          fetchBranches[branch] += 1
+          commit.parent && checkCommit(origin.getCommit(commit.parent), branch)
+          commit.parent2 && checkCommit(origin.getCommit(commit.parent2), branch)
+        }
+      }
+
       for (fb in fetchBranches) {
         if (origin.branches.indexOf(fb) > -1) {
-          fetchCommit = origin.getCommit(fb);
-
-          var notInLocal = local.getCommit(fetchCommit.id) === null;
-          while (notInLocal) {
-            if (fetchIds.indexOf(fetchCommit.id) === -1) {
-              fetchCommits.unshift(fetchCommit);
-              fetchIds.unshift(fetchCommit.id);
-            }
-            fetchBranches[fb] += 1;
-            fetchCommit = origin.getCommit(fetchCommit.parent);
-            notInLocal = local.getCommit(fetchCommit.id) === null;
-          }
+          checkCommit(origin.getCommit(fb), fb)
         }
       }
 
@@ -489,6 +702,7 @@ function(_yargs) {
         local.commitData.push({
           id: fetchCommit.id,
           parent: fetchCommit.parent,
+          parent2: fetchCommit.parent2,
           tags: []
         });
       }
@@ -509,6 +723,9 @@ function(_yargs) {
     },
 
     pull: function(args) {
+      if (this.mode !== 'local') {
+        throw new Error('can only pull from local')
+      }
       var control = this,
         local = this.historyView,
         currentBranch = local.currentBranch,
@@ -525,6 +742,7 @@ function(_yargs) {
         throw new Error('Current branch is not set up for pulling.');
       }
 
+      this.lock()
       setTimeout(function() {
         try {
           if (args[0] === '--rebase' || control.rebaseConfig[currentBranch] === 'true') {
@@ -534,25 +752,36 @@ function(_yargs) {
           }
         } catch (error) {
           control.error(error.message);
+        } finally {
+          this.unlock()
         }
 
         if (isFastForward) {
           control.info('Fast-forwarded to ' + rtBranch + '.');
         }
-      }, 750);
+      }.bind(this), 750);
     },
 
-    push: function(args) {
+    push: function(args, opts, cmdStr) {
+      var opt = yargs(cmdStr, {
+        alias: { force: ['f'], upstream: ['u'] },
+        boolean: ['f', 'u']
+      })
+
+      if (this.mode !== 'local') {
+        throw new Error('can only push from local')
+      }
       var control = this,
         local = this.historyView,
-        remoteName = args.shift() || 'origin',
+        remoteName = opt._[0] || 'origin',
         remote = this[remoteName + 'View'],
-        branchArgs = args.pop(),
+        branchArgs = opt._[1],
         localRef = local.currentBranch,
         remoteRef = local.currentBranch,
         localCommit, remoteCommit,
         findCommitsToPush,
         isCommonCommit,
+        idsToPush = [],
         toPush = [];
 
       if (remoteName === 'history') {
@@ -561,6 +790,10 @@ function(_yargs) {
 
       if (!remote) {
         throw new Error('There is no remote server named "' + remoteName + '".');
+      }
+
+      if (remote.branches.indexOf(remoteRef) === -1) {
+        remote.branch(remoteRef, 'e137e9b')
       }
 
       if (branchArgs) {
@@ -582,31 +815,21 @@ function(_yargs) {
       remoteCommit = remote.getCommit(remoteRef);
 
       findCommitsToPush = function findCommitsToPush(localCommit) {
-        var commitToPush,
-          isCommonCommit = remote.getCommit(localCommit.id) !== null;
+        var alreadyPushed = remote.getCommit(localCommit.id) !== null
+        if (!alreadyPushed && idsToPush.indexOf(localCommit.id) === -1) {
+          idsToPush.push(localCommit.id)
 
-        while (!isCommonCommit) {
-          commitToPush = {
-            id: localCommit.id,
-            parent: localCommit.parent,
-            tags: []
-          };
+          toPush.push(Object.assign({}, localCommit, {tags: []}))
 
-          if (typeof localCommit.parent2 === 'string') {
-            commitToPush.parent2 = localCommit.parent2;
-            findCommitsToPush(local.getCommit(localCommit.parent2));
-          }
-
-          toPush.unshift(commitToPush);
-          localCommit = local.getCommit(localCommit.parent);
-          isCommonCommit = remote.getCommit(localCommit.id) !== null;
+          localCommit.parent && findCommitsToPush(local.getCommit(localCommit.parent))
+          localCommit.parent2 && findCommitsToPush(local.getCommit(localCommit.parent2))
         }
-      };
+      }
 
       // push to an existing branch on the remote
       if (remoteCommit && remote.branches.indexOf(remoteRef) > -1) {
-        if (!local.isAncestorOf(remoteCommit.id, localCommit.id)) {
-          throw new Error('Push rejected. Non fast-forward.');
+        if (!local.isAncestorOf(remoteCommit.id, localCommit.id) && !opt.f) {
+          throw new Error('Push rejected. Non fast-forward. Try pulling first');
         }
 
         isCommonCommit = localCommit.id === remoteCommit.id;
@@ -615,13 +838,25 @@ function(_yargs) {
           return this.info('Everything up-to-date.');
         }
 
-        findCommitsToPush(localCommit);
+        if (!opt.f) {
+          findCommitsToPush(localCommit);
+          remote.commitData = remote.commitData.concat(toPush);
+        } else {
+          var localData = JSON.parse(JSON.stringify(local.commitData))
+          localData.forEach(function(commit) {
+            var originTagIndex = commit.tags.indexOf('origin/' + localRef)
+            if (originTagIndex > -1) {
+              commit.tags.splice(originTagIndex, 1)
+            }
+          })
+          remote.commitData = localData
+          this.info('forced update')
+        }
 
-        remote.commitData = remote.commitData.concat(toPush);
-        remote.moveTag(remoteRef, toPush[toPush.length - 1].id);
+        remote.moveTag(remoteRef, localCommit.id);
+        local.moveTag('origin/' + localRef, localRef)
         remote.renderCommits();
-      } else {
-        this.info('Sorry, creating new remote branches is not supported yet.');
+        local.renderTags()
       }
     },
 
@@ -637,7 +872,7 @@ function(_yargs) {
 
     reflog: function (args) {
       var reflogExistsFor = function (ref) {
-        return this.historyView.logs[ref.toLowerCase()]
+        return this.getRepoView().logs[ref.toLowerCase()]
       }.bind(this)
 
       var ref = ""
@@ -670,8 +905,12 @@ function(_yargs) {
           this.error("Reflog for ref " + ref + " does not exist")
         }
       } else if (subcommand === "show") {
-        var logs = this.historyView.getReflogEntries(ref)
-        this.info(logs.join("<br>"))
+        var logs = this.getRepoView().getReflogEntries(ref)
+        this.info(
+          logs.map(function(l) {
+            return "<span class='reflog-entry'>&gt; " + l + "</span>"
+          }).join('')
+        )
       } else if (subcommand === "expire" || subcommand === "delete") {
         this.info("Real git reflog supports the '" + subcommand +
                   "' subcommand but this tool only supports 'show' and 'exists'")

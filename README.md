@@ -1,13 +1,53 @@
-﻿explain-git-with-d3
-===================
+﻿Visualize Git
+=============
 
-Use D3 to visualize simple git branching operations.
+Git is an amazingly powerful tool — and it can be amazingly confusing. Demystify Git commands with visualizations powered by D3. Give it a try at [http://git-school.github.io/visualizing-git/](http://git-school.github.io/visualizing-git/)!
 
-This simple project is designed to help people understand some basic git concepts visually.
+![By Git School](http://i.imgur.com/EiuyjJQ.png?1)
 
-This is my first attempt at using both SVG and D3. I hope it is helpful to you.
+[Visualize Git](http://git-school.github.io/visualizing-git/) illustrates what's going on underneath the hood when you use common Git operations. You'll see what exactly is happening to your commit graph. We aim to support all the most basic git operations, including interacting with remotes.
 
-I upload the contents of this repository via FTP every once in a while to: http://www.wei-wang.com/ExplainGitWithD3/
-so you can just visit that site to use an (almost) up to date version.
+Here are some examples of the fun things you can do with it:
 
-UPDATE: the page can now also be accessed via: http://onlywei.github.io/explain-git-with-d3/
+## Rebase
+![rebase](images/viz-rebase.gif)
+
+## Cherry-pick
+![cherry-pick](images/cherry-pick.gif)
+
+## Push/pull
+![push-pull](images/remote.gif)
+
+## Supported operations
+
+Type `help` in the command box to see a list of supported operations
+
+`pres()` = Turn on presenter mode<br>
+`undo` = Undo the last git command<br>
+`redo` = Redo the last undone git command<br>
+`mode` = Change mode (`local` or `remote`)<br>
+`clear` = Clear the history pane and reset the visualization
+
+Available Git Commands:
+```
+git branch
+git checkout
+git cherry_pick
+git commit
+git fetch
+git log
+git merge
+git pull
+git push
+git rebase
+git reflog
+git reset
+git rev_parse
+git revert
+git tag
+```
+
+
+We hope you find this tool useful! Issues and pull requests are welcome! Enjoy! :sparkles:
+
+Based on the awesome work done by [@onlywei](https://github.com/onlywei/explain-git-with-d3) :bow:

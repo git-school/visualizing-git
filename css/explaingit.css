@@ -1,5 +1,14 @@
 /* styles */
 
+#last-command {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 70px;
+  opacity: 0.8;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
 body, html {
   height: 100%;
 }
@@ -63,6 +72,7 @@ span.cmd {
   background-color: #EFF1FF;
   border-left: 1px dotted #AAA;
   border-bottom: 1px dotted #AAA;
+  z-index: 100
 }
 
 #ExplainGitZen-Container {
@@ -93,6 +103,7 @@ span.cmd {
   background-color: #EFF1FF;
   border-left: 1px dotted #AAA;
   border-bottom: 1px dotted #AAA;
+  min-height: 400px;
 }
 
 #ExplainGitZen-Container .playground-container {
@@ -115,8 +126,13 @@ span.cmd {
   bottom: 0;
   width: 250px;
   vertical-align: bottom;
-  background-color: #000;
   border: 1px dotted #AAA;
+}
+
+.control-box select {
+  position: absolute;
+  left: 3px;
+  top: 3px;
 }
 
 .control-box button {
@@ -129,14 +145,21 @@ span.cmd {
 .control-box .log {
   overflow-y: auto;
   position: absolute;
-  top: 0px;
+  background: #000;
+  top: 30px;
   bottom: 20px;
   left: 0;
   right: 0;
   border-bottom: 1px solid #AAA;
 }
 
-.control-box .log, .control-box input[type="text"] {
+.control-box .log .reflog-entry, .control-box .log .log-entry {
+  display: inline-block;
+  padding-left: 15px;
+  text-indent: -15px;
+}
+
+.control-box .log, .control-box input[type="text"], .control-box .input {
   font-family: Courier New;
   font-size: 14px;
 }
@@ -145,7 +168,7 @@ span.cmd {
   padding-left: 15px;
   color: #FFF;
   line-height: 14px;
-  background: url(../images/prompt.gif) no-repeat left center transparent;
+  background: url(../images/prompt.gif) no-repeat left top black;
 }
 
 .control-box input[type="text"] {
@@ -154,7 +177,7 @@ span.cmd {
   padding-left: 15px;
   color: #FFF;
   line-height: 14px;
-  background: url(../images/prompt.gif) no-repeat left center transparent;
+  background: url(../images/prompt.gif) no-repeat left center black;
 }
 
 .control-box .log .info, .control-box .log .error {
@@ -176,7 +199,7 @@ span.cmd {
 }
 
 circle.commit {
-  fill: #EEEEEE;
+  fill: #CCCCCC;
   stroke: #888888;
   stroke-width: 3;
   transition-property: stroke, fill;
@@ -184,27 +207,18 @@ circle.commit {
   transition-timing-function: ease-out;
 }
 
-circle.commit.merge-commit {
-  stroke: #663300;
-  fill: #FFFFCC;
-}
-
-circle.commit.merge-commit.checked-out {
-  fill: #FFFFCC;
-}
-
 circle.commit.reverted {
-  fill: #FFC;
-  stroke: #933;
+  fill: #CCEEFF;
+  stroke: #0066CC;
 }
 
 circle.commit.reverted.checked-out {
-  fill: #FFC;
+  fill: #CCEEFF;
 }
 
 circle.commit.rebased {
-  stroke: #3300CC;
-  fill: #CCCCFF;
+  stroke: #560066;
+  fill: #b907a4;
 }
 
 circle.commit.rebased.checked-out {
@@ -212,17 +226,18 @@ circle.commit.rebased.checked-out {
 }
 
 circle.commit.cherry-picked {
-  stroke: #FF0000;
-  fill: #FFEEEE;
+  stroke: #660000;
+  fill: #ff5151;
 }
 
 circle.commit.cherry-picked.checked-out {
-  fill: #FFEEEE;
+  fill: #ff5151;
 }
 
 circle.commit.branchless {
   fill: #FEFEFE;
-  stroke: #DDD;
+  stroke: #888888;
+  stroke-dasharray: 5, 5;
 }
 
 circle.commit.branchless.checked-out {
@@ -230,7 +245,7 @@ circle.commit.branchless.checked-out {
 }
 
 circle.commit.checked-out {
-  fill: #CCFFCC;
+  fill: #8ce08c;
   stroke: #339900;
 }
 
@@ -240,13 +255,14 @@ circle.commit.logging {
 }
 
 .commit-pointer {
-  stroke: #666;
+  stroke: rgba(100, 100, 100, 0.5);
   stroke-width: 4;
 }
 
 .merge-pointer {
-  stroke: #663300;
+  stroke: rgba(100, 100, 100, 0.5);
   stroke-width: 4;
+  stroke-dasharray: 15, 4;
 }
 
 .commit-pointer.branchless, .merge-pointer.branchless {
@@ -288,7 +304,7 @@ g.branch-tag.remote-branch > rect {
 g.branch-tag > text {
   text-anchor: middle;
   fill: #000;
-  font-size: 11px;
+  font-size: 15px;
   font-family: Arial;
 }
 
@@ -301,7 +317,7 @@ g.head-tag > rect {
 g.head-tag > text {
   text-anchor: middle;
   fill: #000;
-  font-size: 11px;
+  font-size: 15px;
   font-family: Arial;
   font-weight: bold;
   text-transform: uppercase;

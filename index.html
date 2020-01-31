@@ -1,17 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-115441830-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-115441830-1');
+</script>
+
 <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-<title>Explain Git with D3</title>
-<script data-main="js/main" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.4/require.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/2.1.0/normalize.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/1140/2.0/1140.css">
+<title>Visualizing Git</title>
+<script src="js/vendor/jquery.js"></script>
+<script src="js/vendor/jquery-ui.min.js"></script>
+<script data-main="js/main" src="js/vendor/require.min.js"></script>
+<link rel="stylesheet" href="css/normalize.css">
+<link rel="stylesheet" href="css/1140.css">
 <link rel="stylesheet" href="css/explaingit.css">
+<link rel="stylesheet" href="css/jquery-ui.min.css">
 </head>
 <body>
 
 <div id="ExplainGitZen-Container" style="display:none">
-    <div class="playground-container"></div>
+    <div class="playground-container">
+      <pre id='last-command' style='display: none;'></pre>
+    </div>
 </div>
 
 <svg version="1.1" baseProfile="full"
@@ -20,7 +35,7 @@
      xmlns:ev="http://www.w3.org/2001/xml-events"
      width="0" height="0">
 
-    <marker id="triangle" refX="5" refY="5" markerUnits="strokeWidth" fill="#666"
+    <marker id="triangle" refX="5" refY="5" markerUnits="strokeWidth" fill="rgba(100,100,100,0.8)"
             markerWidth="4" markerHeight="3" orient="auto" viewBox="0 0 10 10">
         <path d="M 0 0 L 10 5 L 0 10 z"/>
     </marker>
@@ -28,227 +43,14 @@
             markerWidth="4" markerHeight="3" orient="auto" viewBox="0 0 10 10">
         <path d="M 0 0 L 10 5 L 0 10 z"/>
     </marker>
-    <marker id="brown-triangle" refX="5" refY="5" markerUnits="strokeWidth" fill="#663300"
+    <marker id="brown-triangle" refX="5" refY="5" markerUnits="strokeWidth" fill="rgba(100,100,100,0.8)"
             markerWidth="4" markerHeight="3" orient="auto" viewBox="0 0 10 10">
         <path d="M 0 0 L 10 5 L 0 10 z"/>
     </marker>
 </svg>
 
 <script type="text/javascript">
-require(['explaingit'], function (explainGit) {
-    var examples = {
-        'commit': {
-            name: 'Commit',
-            height: 200,
-            baseLine: 0.4,
-            commitData: [
-                {id: 'e137e9b', tags: ['master']}
-            ],
-            initialMessage: 'Type git commit a few times.'
-        },
-        'branch': {
-            name: 'Branch',
-            baseLine: 0.6,
-            commitData: [
-                {id: 'e137e9b', tags: ['master']}
-            ]
-        },
-        'tag': {
-            name: 'Tag',
-            baseLine: 0.6,
-            commitData: [
-                {id: 'e137e9b', tags: ['master']}
-            ]
-        },
-        'checkout': {
-            name: 'Checkout',
-            height: 500,
-            commitData: [
-                {id: 'e137e9b'},
-                {id: 'bb92e0e', parent: 'e137e9b', tags: ['master']},
-                {id: 'e088135', parent: 'e137e9b', tags: ['dev']}
-            ],
-            initialMessage:
-                'Use git checkout, git branch, and git commit commands until you understand.'
-        },
-        'checkout-b': {
-            name: 'Checkout-b',
-            height: 500,
-            commitData: [
-                {id: 'e137e9b'},
-                {id: 'f5b32c8', parent: 'e137e9b'},
-                {id: 'bb92e0e', parent: 'f5b32c8', tags: ['master']},
-                {id: 'e088135', parent: 'e137e9b', tags: ['dev']}
-            ],
-            initialMessage:
-                'Use git checkout -b and git commit commands until you understand.'
-        },
-        'reset': {
-            name: 'Reset',
-            height: 200,
-            baseLine: 0.5,
-            commitData: [
-                {id: 'e137e9b'},
-                {id: '0e70093', parent: 'e137e9b'},
-                {id: '3e33afd', parent: '0e70093', tags: ['master']}
-            ],
-            initialMessage: 'Type "git reset HEAD^".'
-        },
-        'revert': {
-            name: 'Revert',
-            height: 200,
-            baseLine: 0.5,
-            commitData: [
-                {id: 'e137e9b'},
-                {id: '0e70093', parent: 'e137e9b'},
-                {id: '3e33afd', parent: '0e70093', tags: ['master']}
-            ],
-            initialMessage: 'Type "git revert 0e70093".'
-        },
-        'merge': {
-            name: 'Merge',
-            height: 500,
-            commitData: [
-                {id: 'e137e9b'},
-                {id: 'bb92e0e', parent: 'e137e9b', tags: ['master']},
-                {id: 'f5b32c8', parent: 'e137e9b', tags: ['ff']},
-                {id: 'e088135', parent: 'f5b32c8', tags: ['dev']}
-            ],
-            initialMessage:
-                'Type "git merge dev".'
-        },
-        'rebase': {
-            name: 'Rebase',
-            height: 500,
-            commitData: [
-                {id: 'e137e9b'},
-                {id: 'bb92e0e', parent: 'e137e9b', tags: ['master']},
-                {id: 'f5b32c8', parent: 'e137e9b'},
-                {id: 'e088135', parent: 'f5b32c8', tags: ['dev']}
-            ],
-            currentBranch: 'dev',
-            initialMessage:
-                'Type "git rebase master".'
-        },
-        'fetch': {
-            name: 'Fetch',
-            height: 500,
-            commitData: [
-                {id: 'e137e9b', tags: ['origin/master']},
-                {id: '6ce726f', parent: 'e137e9b'},
-                {id: 'bb92e0e', parent: '6ce726f', tags: ['master']},
-                {id: '0cff760', parent: 'e137e9b', tags: ['origin/dev']},
-                {id: '4ed301d', parent: '0cff760', tags: ['dev']}
-            ],
-            originData: [
-                {id: 'e137e9b'},
-                {id: '7eb7654', parent: 'e137e9b'},
-                {id: '090e2b8', parent: '7eb7654'},
-                {id: 'ee5df4b', parent: '090e2b8', tags: ['master']},
-                {id: '0cff760', parent: 'e137e9b'},
-                {id: '2f8d946', parent: '0cff760'},
-                {id: '29235ca', parent: '2f8d946', tags: ['dev']}
-            ],
-            initialMessage:
-                'Carefully compare the commit IDs between the origin and the local repository. ' +
-                'Then type "git fetch".'
-        },
-        'pull': {
-            name: 'Pull',
-            height: 500,
-            commitData: [
-                {id: 'e137e9b', tags: ['origin/master']},
-                {id: '46d095b', parent: 'e137e9b', tags: ['master']}
-            ],
-            originData: [
-                {id: 'e137e9b'},
-                {id: '7eb7654', parent: 'e137e9b'},
-                {id: '090e2b8', parent: '7eb7654'},
-                {id: 'ee5df4b', parent: '090e2b8', tags: ['master']}
-            ],
-            initialMessage:
-                'Carefully compare the commit IDs between the origin and the local repository. ' +
-                'Then type "git pull".'
-        },
-        'push': {
-            name: 'Push',
-            height: 500,
-            commitData: [
-                {id: 'e137e9b', tags: ['origin/master']},
-                {id: '46d095b', parent: 'e137e9b', tags: ['master']}
-            ],
-            originData: [
-                {id: 'e137e9b'},
-                {id: '7eb7654', parent: 'e137e9b', tags: ['master']}
-            ],
-            initialMessage:
-                'Carefully compare the commit IDs between the origin and the local repository. ' +
-                'Then type "git push".'
-        },
-        'clean': {
-            name: 'Clean',
-            height: 200,
-            baseLine: 0.4,
-            commitData: [
-                {id: 'e137e9b', tags: ['origin/master']},
-                {id: '0e70093', parent: 'e137e9b'},
-                {id: '3e33afd', parent: '0e70093', tags: ['master']}
-            ],
-            initialMessage: 'Type "git reset origin/master".'
-        },
-        'fetchrebase': {
-            name: 'FetchRebase',
-            height: 500,
-            commitData: [
-                {id: 'e137e9b', tags: ['origin/master', 'master']},
-                {id: '46d095b', parent: 'e137e9b'},
-                {id: 'dccdc4d', parent: '46d095b', tags: ['my-branch']}
-            ],
-            currentBranch: 'my-branch',
-            originData: [
-                {id: 'e137e9b'},
-                {id: '7eb7654', parent: 'e137e9b'},
-                {id: '090e2b8', parent: '7eb7654'},
-                {id: 'ee5df4b', parent: '090e2b8', tags: ['master']}
-            ],
-            initialMessage:
-                'First type "git fetch". Then type "git rebase origin/master".'
-        },
-        'deletebranches': {
-            name: 'DeleteBranches',
-            height: 500,
-            baseLine: 0.6,
-            commitData: [
-                {id: 'e137e9b'},
-                {id: 'bb92e0e', parent: 'e137e9b'},
-                {id: 'd25ee9b', parent: 'bb92e0e', tags: ['master']},
-                {id: '071ff28', parent: 'e137e9b', tags: ['protoss']},
-                {id: 'f5b32c8', parent: 'bb92e0e'},
-                {id: 'e088135', parent: 'f5b32c8', tags: ['zerg']},
-                {id: '9e6c322', parent: 'bb92e0e'},
-                {id: '593ae02', parent: '9e6c322', tags: ['terran']}
-            ],
-            currentBranch: 'terran',
-            initialMessage:
-                'Delete some branches.'
-        },
-        'freeplay': {
-            name: 'Free',
-            height: 500,
-            commitData: [
-                {id: 'e137e9b', tags: ['origin/master', 'master']}
-            ],
-            originData: [
-                {id: 'e137e9b'},
-                {id: '7eb7654', parent: 'e137e9b'},
-                {id: '090e2b8', parent: '7eb7654'},
-                {id: 'ee5df4b', parent: '090e2b8', tags: ['master']}
-            ],
-            initialMessage:
-                'Have fun.'
-        }
-    };
-
+require(['explaingit', 'demos'], function (explainGit, demos) {
     function ready(fn) {
       if (document.readyState != 'loading'){
         fn();
@@ -257,20 +59,81 @@ require(['explaingit'], function (explainGit) {
       }
     }
 
-    ready(open)
+    function clearSavedState () {
+      if (window.localStorage) {
+        window.localStorage.removeItem('git-viz-snapshot')
+      }
+    }
+
+    function cleanupDom () {
+      $('.svg-container.remote-container').remove()
+    }
+
+    function clean () {
+      clearSavedState()
+      cleanupDom()
+    }
+
+    function cleanHash (hash) {
+      return hash.replace(/^#/, '')
+    }
+
+    function findDemo (demos, name) {
+      return demos.filter(function (d) {
+        return d.key === name
+      })[0]
+    }
+
+    function copyDemo (demo) {
+      // make a deep copy
+      return JSON.parse(JSON.stringify(demo))
+    }
+
+    var lastDemo = findDemo(demos, cleanHash(window.location.hash)) || demos[0]
+
+    ready(function () {
+      window.onhashchange = function () {
+        var demo = findDemo(demos, cleanHash(window.location.hash)) || lastDemo
+        if (demo) {
+          lastDemo = demo
+          document.getElementById('last-command').textContent = ""
+          clean()
+          open()
+        }
+      }
+
+      open()
+    })
 
     function open() {
       explainGit.reset();
 
-      explainGit.open({
-          name: 'Zen',
-          height: '100%',
-          commitData: [
-              {id: 'e137e9b', tags: ['master'], message: 'first commit'}
-          ],
-          initialMessage:
-              'Have fun.'
-      });
+      var savedState = null
+      if (window.localStorage) {
+        savedState = JSON.parse(window.localStorage.getItem('git-viz-snapshot') || 'null')
+      }
+
+      var initial = Object.assign(copyDemo(lastDemo), {
+        name: 'Zen',
+        height: '100%',
+        initialMessage: lastDemo.message,
+        undoHistory: savedState,
+        hvSavedState: savedState && savedState.stack[savedState.pointer].hv,
+        ovSavedState: savedState && savedState.stack[savedState.pointer].ov
+      })
+
+      explainGit.open(initial);
+    }
+
+    window.resetVis = function () {
+      if (confirm('This will reset your visualization. Are you sure?')) {
+        clean()
+        open()
+      }
+    }
+
+    window.pres = function () {
+      document.getElementById('last-command').style.display = 'block'
     }
 });
 </script>

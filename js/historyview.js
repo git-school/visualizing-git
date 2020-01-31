@@ -237,24 +237,30 @@ define(['d3'], function() {
    */
   function HistoryView(config) {
     var commitData = config.commitData || [],
-      commit;
+      commit, branch;
 
+    this.branches = [];
     for (var i = 0; i < commitData.length; i++) {
       commit = commitData[i];
       !commit.parent && (commit.parent = 'initial');
       !commit.tags && (commit.tags = []);
+      for (var j = 0; j < commit.tags.length; j++) {
+        branch = commit.tags[j]
+        if (branch.indexOf('[') !== 0 && this.branches.indexOf(branch) === -1) {
+          this.branches.push(branch)
+        }
+      }
     }
 
     this.name = config.name || 'UnnamedHistoryView';
     this.commitData = commitData;
 
-    this.branches = ['master'];
     this.currentBranch = config.currentBranch || 'master';
 
     this.width = config.width;
     this.height = config.height || 400;
     this.orginalBaseLine = config.baseLine;
-    this.baseLine = this.height * (config.baseLine || 0.6);
+    this.baseLine = this.height * (config.baseLine || 0.9);
 
     this.commitRadius = config.commitRadius || 20;
     this.pointerMargin = this.commitRadius * 1.3;
@@ -270,6 +276,15 @@ define(['d3'], function() {
       cx: -(this.commitRadius * 2),
       cy: this.baseLine
     };
+
+    this.locks = 0
+    this._eventCallbacks = {}
+
+    if (config.savedState) {
+      setTimeout(function() {
+        this.deserialize(config.savedState)
+      }.bind(this))
+    }
   }
 
   HistoryView.generateId = function() {
@@ -277,6 +292,73 @@ define(['d3'], function() {
   };
 
   HistoryView.prototype = {
+    serialize: function () {
+      var data = {
+        commitData: this.commitData,
+        branches: this.branches,
+        logs: this.logs,
+        currentBranch: this.currentBranch,
+      }
+
+      return JSON.stringify(data)
+    },
+
+    deserialize: function (data) {
+      data = JSON.parse(data)
+      if (data) {
+        this.commitData = data.commitData
+        this.branches = data.branches
+        this.logs = data.logs
+        this._setCurrentBranch(data.currentBranch || null)
+        this.renderCommits()
+        this.renderTags()
+      }
+    },
+
+    emit: function (event) {
+      var callbacks = this._eventCallbacks[event] || []
+      callbacks.forEach(function(callback) {
+        try {
+          callback(event)
+        } finally {
+          // nothing
+        }
+      })
+    },
+
+    on: function (event, callback) {
+      var callbacks = this._eventCallbacks[event] || []
+      callbacks.push(callback)
+      this._eventCallbacks[event] = callbacks
+
+      return function () {
+        var cbs = this._eventCallbacks[event] || []
+        var idx = cbs.indexOf(callback)
+        if (idx > -1) {
+          cbs.splice(idx, 1)
+          this._eventCallbacks[event] = cbs
+        }
+      }.bind(this)
+    },
+
+    lock: function () {
+      this.locks++
+      if (this.locks === 1) {
+        this.emit('lock')
+      }
+    },
+
+    unlock: function () {
+      if (this.locks <= 0) {
+        throw new Error('cannot unlock! not locked')
+      }
+
+      this.locks--
+      if (this.locks === 0) {
+        this.emit('unlock')
+      }
+    },
+
     /**
      * @method getCommit
      * @param ref {String} the id or a tag name that refers to the commit
@@ -438,11 +520,15 @@ define(['d3'], function() {
         .classed('svg-container', true)
         .classed('remote-container', this.isRemote);
 
+      if (this.isRemote) {
+        $(svgContainer).draggable();
+      }
+
       svg = svgContainer.append('svg:svg');
 
       svg.attr('id', this.name)
         .attr('width', this.width)
-        .attr('height', this.height);
+        .attr('height', this.isRemote ? this.height + 150 : this.height);
 
       if (this.isRemote) {
         svg.append('svg:text')
@@ -546,7 +632,7 @@ define(['d3'], function() {
           return view.name + '-' + d.id;
         })
         .classed('reverted', function(d) {
-          return d.reverted;
+          return d.reverted || d.revertSource;
         })
         .classed('rebased', function(d) {
           return d.rebased || d.rebaseSource;
@@ -556,6 +642,9 @@ define(['d3'], function() {
         })
         .classed('cherry-picked', function(d) {
           return d.cherryPicked || d.cherryPickSource;
+        })
+        .classed('checked-out', function(d) {
+          return d.tags.indexOf('HEAD') > -1
         });
 
       existingCircles.transition()
@@ -581,7 +670,10 @@ define(['d3'], function() {
         .attr('r', 1)
         .transition("inflate")
         .duration(500)
-        .attr('r', this.commitRadius);
+        .attr('r', this.commitRadius)
+
+      existingCircles.exit()
+        .remove()
 
     },
 
@@ -620,6 +712,9 @@ define(['d3'], function() {
         .transition()
         .duration(500)
         .call(fixPointerEndPosition, view);
+
+      existingPointers.exit()
+        .remove()
     },
 
     _renderMergePointers: function() {
@@ -674,6 +769,9 @@ define(['d3'], function() {
           points[1] = x2 + ',' + y2;
           return points.join(' ');
         });
+
+      existingPointers.exit()
+        .remove()
     },
 
     _renderIdLabels: function() {
@@ -703,6 +801,9 @@ define(['d3'], function() {
         .classed(className, true)
         .text(getText)
         .call(fixIdPosition, view, delta);
+
+      existingTexts.exit()
+        .remove()
     },
 
     _parseTagData: function() {
@@ -743,6 +844,12 @@ define(['d3'], function() {
       return tagData;
     },
 
+    _walkCommit: function (commit) {
+      commit.branchless = false
+      commit.parent && this._walkCommit(this.getCommit(commit.parent))
+      commit.parent2 && this._walkCommit(this.getCommit(commit.parent2))
+    },
+
     _markBranchlessCommits: function() {
       var branch, commit, parent, parent2, c, b;
 
@@ -758,18 +865,7 @@ define(['d3'], function() {
           parent = this.getCommit(commit.parent);
           parent2 = this.getCommit(commit.parent2);
 
-          commit.branchless = false;
-
-          while (parent) {
-            parent.branchless = false;
-            parent = this.getCommit(parent.parent);
-          }
-
-          // just in case this is a merge commit
-          while (parent2) {
-            parent2.branchless = false;
-            parent2 = this.getCommit(parent2.parent);
-          }
+          this._walkCommit(commit)
         }
       }
 
@@ -830,7 +926,7 @@ define(['d3'], function() {
 
       newTags.append('svg:rect')
         .attr('width', function(d) {
-          return (d.name.length * 6) + 10;
+          return (d.name.length * 8) + 20;
         })
         .attr('height', 20)
         .attr('y', function(d) {
@@ -857,18 +953,21 @@ define(['d3'], function() {
           return commit.cx;
         });
 
+      existingTags.exit()
+        .remove()
+
       this._markBranchlessCommits();
     },
 
     _setCurrentBranch: function(branch) {
       var display = this.svg.select('text.current-branch-display'),
-        text = 'Current Branch: ';
+        text = 'HEAD: ';
 
       if (branch && branch.indexOf('/') === -1) {
         text += branch;
         this.currentBranch = branch;
       } else {
-        text += ' DETACHED HEAD';
+        text += ' (detached head)';
         this.currentBranch = null;
       }
 
@@ -941,7 +1040,8 @@ define(['d3'], function() {
       delete ancestors.initial
       ancestors[refspec] = -1
       var commitIds = Object.keys(ancestors)
-      this.flashProperty(commitIds, 'logging')
+      this.lock()
+      this.flashProperty(commitIds, 'logging', null, this.unlock)
       return commitIds.map(function(commitId) {
         return {commit: this.getCommit(commitId), order: ancestors[commitId]}
       }, this).sort(function(a,b) {
@@ -1001,6 +1101,7 @@ define(['d3'], function() {
         refs.forEach(function(ref) {
           var commit = this.getCommit(ref)
           var message = commit.message || ""
+          this.lock()
           this.flashProperty([commit.id], 'cherryPicked', function() {
             this.commit({cherryPickSource: [commit.id]}, message)
             var reflogMessage = "cherry-pick: " + message
@@ -1012,14 +1113,15 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
-          })
+          }, this.unlock)
         }, this)
       } else {
         refs.forEach(function(ref) {
           var commit = this.getCommit(ref)
           var message = commit.message || ""
-          var cherryPickSource = this.getCherryPickSource(commit.id, mainline)
+          var cherryPickSource = this.getNonMainlineCommits(commit.id, mainline)
 
+          this.lock()
           this.flashProperty(cherryPickSource, 'cherryPicked', function() {
             this.commit({cherryPickSource: cherryPickSource}, message)
             var reflogMessage = "cherry-pick: " + message
@@ -1031,12 +1133,12 @@ define(['d3'], function() {
                 this.currentBranch, this.getCommit('HEAD').id, reflogMessage
               )
             }
-          })
+          }, this.unlock)
         }, this)
       }
     },
 
-    getCherryPickSource: function(ref, mainline) {
+    getNonMainlineCommits: function(ref, mainline) {
       if (mainline === 1) mainline = 2
       else if (mainline === 2) mainline = 1
       else throw new Error("Mainline " + mainline + " isn't supported")
@@ -1046,7 +1148,7 @@ define(['d3'], function() {
       return Object.keys(uniqueAncestors[mainline-1]).concat(ref)
     },
 
-    flashProperty: function(refs, property, callback) {
+    flashProperty: function(refs, property, callback, callback2) {
       this.setProperty(refs, property)
       this.renderCommits()
       setTimeout(function() {
@@ -1054,6 +1156,7 @@ define(['d3'], function() {
         setTimeout(function() {
           this.unsetProperty(refs, property)
           this.renderCommits()
+          callback2 && callback2.call(this)
         }.bind(this), 500)
       }.bind(this), 1000)
     },
@@ -1196,20 +1299,76 @@ define(['d3'], function() {
       return this;
     },
 
-    revert: function(ref) {
-      var commit = this.getCommit(ref);
+    revert: function(refs, mainline) {
+      refs.forEach(function(ref) {
+        if (!this.getCommit(ref)) {
+          throw new Error("fatal: bad revision '" + ref + "'")
+          return
+        }
+      }, this)
 
-      if (!commit) {
-        throw new Error('Cannot find ref: ' + ref);
+      if (mainline) {
+        if (mainline > 2 || mainline < 1) {
+          throw new Error("Commit " + refs[0] + " does not have parent " + mainline)
+          return
+        }
+        var nonMergeRefs = refs.filter(function(ref) {
+          var commit = this.getCommit(ref)
+          return !commit.parent || !commit.parent2
+        }, this)
+
+        if (nonMergeRefs.length) {
+          throw new Error('mainline specified but ' + nonMergeRefs[0] + ' is not a merge')
+        }
+      } else {
+        var mergeRefs = refs.filter(function(ref) {
+          var commit = this.getCommit(ref)
+          return commit.parent && commit.parent2
+        }, this)
+
+        if (mergeRefs.length) {
+          throw new Error('cannot revert merge commit ' + mergeRefs[0] + ' without specifying a mainline with -m')
+        }
       }
 
-      if (this.isAncestorOf(commit, 'HEAD')) {
-        commit.reverted = true;
-        this.commit({
-          reverts: commit.id
-        }, "Revert " + commit.id);
+      if (!mainline) {
+        refs.forEach(function(ref) {
+          var commit = this.getCommit(ref)
+          var message = commit.message || ""
+          this.lock()
+          this.flashProperty([commit.id], 'reverted', function() {
+            this.commit({revertSource: [commit.id]}, "Revert " + commit.id)
+            var reflogMessage = "revert: " + message
+            this.addReflogEntry(
+              'HEAD', this.getCommit('HEAD').id, reflogMessage
+            )
+            if (this.currentBranch) {
+              this.addReflogEntry(
+                this.currentBranch, this.getCommit('HEAD').id, reflogMessage
+              )
+            }
+          }, this.unlock)
+        }, this)
       } else {
-        throw new Error(ref + 'is not an ancestor of HEAD.');
+        refs.forEach(function(ref) {
+          var commit = this.getCommit(ref)
+          var message = commit.message || ""
+          var revertSource = this.getNonMainlineCommits(commit.id, mainline)
+
+          this.lock()
+          this.flashProperty(revertSource, 'reverted', function() {
+            this.commit({revertSource: revertSource}, "Revert " + commit.id)
+            var reflogMessage = "revert: " + message
+            this.addReflogEntry(
+              'HEAD', this.getCommit('HEAD').id, reflogMessage
+            )
+            if (this.currentBranch) {
+              this.addReflogEntry(
+                this.currentBranch, this.getCommit('HEAD').id, reflogMessage
+              )
+            }
+          }, this.unlock)
+        }, this)
       }
     },
 
@@ -1227,6 +1386,10 @@ define(['d3'], function() {
     isAncestorOf: function(search, start) {
       var startCommit = this.getCommit(start),
         searchCommit = this.getCommit(search)
+
+      if (!searchCommit) {
+        return false
+      }
 
       if (startCommit === searchCommit) {
         return true
@@ -1262,14 +1425,14 @@ define(['d3'], function() {
         this.commit({
           parent2: mergeTarget.id,
           isNoFFCommit: true
-        }, 'merge');
+        }, 'Merge');
       } else if (this.isAncestorOf(currentCommit.id, mergeTarget.id)) {
         this.fastForward(mergeTarget);
         return 'Fast-Forward';
       } else {
         this.commit({
           parent2: mergeTarget.id
-        }, 'merge');
+        }, 'Merge');
       }
     },
 
@@ -1294,23 +1457,29 @@ define(['d3'], function() {
       var uniqueAncestors = getUniqueSetItems(ancestorsFromTarget, ancestorsFromBase)[1]
       var commitsToCopy = Object.keys(uniqueAncestors).concat(origHeadCommit.id)
             .sort(function(key1, key2) {
-              console.log(key1, uniqueAncestors[key1], key2, uniqueAncestors[key2])
               return uniqueAncestors[key2] - uniqueAncestors[key1]
             })
 
+      this.lock()
       setTimeout(function() {
         this.flashProperty(commitsToCopy, 'rebased', function() {
           commitsToCopy.forEach(function(ref) {
-            this.commit({rebased: true, rebaseSource: ref}, this.getCommit(ref).message)
+            var oldCommit = this.getCommit(ref)
+            this.commit({rebased: true, rebaseSource: ref}, oldCommit.message)
+              this.addReflogEntry(
+                'HEAD', this.getCommit('HEAD').id, 'rebase: ' + (oldCommit.message || oldCommit.id)
+              )
           }, this)
           var newHeadCommit = this.getCommit('HEAD')
+          this.lock()
           setTimeout(function() {
             this.deleteBranch('ORIG_HEAD')
             if (origBranch) {
               this.moveTag(origBranch, newHeadCommit.id)
               this.reset(origBranch)
+              this._setCurrentBranch(origBranch)
               this.addReflogEntry(
-                'HEAD', targetCommit.id, 'rebase finished: returning to resf/heads/' + origBranch
+                'HEAD', this.getCommit('HEAD').id, 'rebase finished: returning to refs/heads/' + origBranch
               )
               this.addReflogEntry(
                 origBranch, newHeadCommit.id, 'rebase finished: refs/heads/' +
@@ -1318,8 +1487,9 @@ define(['d3'], function() {
               )
             }
             this.unsetProperty(commitsToCopy, 'rebased')
+            this.unlock()
           }.bind(this), 1000)
-        })
+        }, this.unlock)
       }.bind(this), 1000)
     }
   };
