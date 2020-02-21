@@ -135,18 +135,20 @@ span.cmd {
   top: 3px;
 }
 
-.control-box button {
+.control-box .button {
   font-family: Courier New;
   font-size: 12px;
   margin-right: 5px;
   margin-bottom: 5px;
+  position: absolute;
+  top: 30px;
 }
 
 .control-box .log {
   overflow-y: auto;
   position: absolute;
   background: #000;
-  top: 30px;
+  top: 60px;
   bottom: 20px;
   left: 0;
   right: 0;
