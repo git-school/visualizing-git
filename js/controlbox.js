@@ -97,13 +97,13 @@ function(_yargs, d3, demos) {
 
     render: function(container) {
       var cBox = this,
-        cBoxContainer, log, input, selector;
+        cBoxContainer, log, input, selector, exportbtn;
 
       cBoxContainer = container.append('div')
         .classed('control-box', true);
 
       selector = cBoxContainer.append('select')
-        .classed('scenario-chooser', true)
+        .classed('scenario-chooser', true);
 
       demos.forEach(function (demo) {
         var opt = selector.append('option')
@@ -127,6 +127,23 @@ function(_yargs, d3, demos) {
         if (('#' + newDemo) !== currentDemo) {
           window.location.hash = newDemo
         }
+      })
+
+      exportbtn = cBoxContainer.append('input')
+        .attr('type', 'button')
+        .attr('value', 'Export')
+        .classed("button", true);
+      
+
+      exportbtn.on('click', function () {
+        var text = "test",
+        blob = new Blob([window.localStorage.getItem('git-viz-snapshot')], { type: 'text/plain' }),
+        anchor = document.createElement('a');
+    
+        anchor.download = "export.json";
+        anchor.href = (window.webkitURL || window.URL).createObjectURL(blob);
+        anchor.dataset.downloadurl = ['text/plain', anchor.download, anchor.href].join(':');
+        anchor.click();
       })
 
       log = cBoxContainer.append('div')
