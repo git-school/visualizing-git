@@ -97,7 +97,7 @@ function(_yargs, d3, demos) {
 
     render: function(container) {
       var cBox = this,
-        cBoxContainer, log, input, selector, exportbtn;
+        cBoxContainer, log, input, selector, exportbtn, importbtn, btndivs;
 
       cBoxContainer = container.append('div')
         .classed('control-box', true);
@@ -129,22 +129,56 @@ function(_yargs, d3, demos) {
         }
       })
 
-      exportbtn = cBoxContainer.append('input')
-        .attr('type', 'button')
-        .attr('value', 'Export')
+      btndivs = cBoxContainer.append('div')
         .classed("button", true);
       
-
+      exportbtn = btndivs.append('input')
+        .attr('type', 'button')
+        .attr('value', 'Export');
+      
       exportbtn.on('click', function () {
         var text = "test",
-        blob = new Blob([window.localStorage.getItem('git-viz-snapshot')], { type: 'text/plain' }),
+        blob = new Blob([JSON.stringify(JSON.parse(window.localStorage.getItem('git-viz-snapshot')),null, 1)], { type: 'application/json' }),
         anchor = document.createElement('a');
     
         anchor.download = "export.json";
         anchor.href = (window.webkitURL || window.URL).createObjectURL(blob);
-        anchor.dataset.downloadurl = ['text/plain', anchor.download, anchor.href].join(':');
+        anchor.dataset.downloadurl = ['application/json', anchor.download, anchor.href].join(':');
         anchor.click();
       })
+
+      importbtn = btndivs.append('input')
+        .attr('type', 'button')
+        .attr('value', 'Import');
+
+      importbtn.on('click', function () {
+        if (!confirm('This will erase your current progress. Continue?'))
+          return false;
+
+        // "simply" read file content after selecting...
+        $("#file").trigger("click");
+        $('#file').change(function(){
+                  if($(this).val() != ""){
+                    var myFile = $('#file').prop('files')[0];
+
+                    var fileReader = new FileReader();
+                    fileReader.readAsText(myFile);
+                    fileReader.onload = function () {
+                      var data = fileReader.result;
+                      
+                      window.clean();
+                      window.localStorage.setItem('git-viz-snapshot', data);
+                      window.import();
+                    };
+                  }
+              });
+        window.location.hash = "import";
+      })
+
+      btndivs.append('input')
+      .attr('type', 'file')
+      .attr('id', 'file')
+      .attr('hidden', '');
 
       log = cBoxContainer.append('div')
         .classed('log', true);
