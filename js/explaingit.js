@@ -1,4 +1,5 @@
-define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3) {
+define(['historyview', 'controlbox', 'workspace', 'd3'], function(HistoryView,
+ControlBox, Workspace, d3) {
   var prefix = 'ExplainGit',
     openSandBoxes = [],
     open,
@@ -44,12 +45,21 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
     });
     window.cb = controlBox;
 
+    workspace = new Workspace({
+      historyView: historyView,
+      originView: originView,
+      undoHistory: args.undoHistory
+    });
+    window.ws = workspace
+
     controlBox.render(playground);
     historyView.render(playground);
+    workspace.render(playground);
 
     openSandBoxes.push({
       hv: historyView,
       cb: controlBox,
+      ws: workspace,
       container: container
     });
   };
@@ -59,6 +69,7 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
       var osb = openSandBoxes[i];
       osb.hv.destroy();
       osb.cb.destroy();
+      osb.ws.destroy();
       osb.container.style('display', 'none');
     }
 
@@ -69,6 +80,7 @@ define(['historyview', 'controlbox', 'd3'], function(HistoryView, ControlBox, d3
   explainGit = {
     HistoryView: HistoryView,
     ControlBox: ControlBox,
+    Workspace: Workspace,
     generateId: HistoryView.generateId,
     open: open,
     reset: reset

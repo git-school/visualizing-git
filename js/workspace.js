@@ -1,0 +1,374 @@
+define(['d3'], function() {
+  "use strict";
+
+  var REG_MARKER_END = 'url(#triangle)',
+    MERGE_MARKER_END = 'url(#brown-triangle)',
+    FADED_MARKER_END = 'url(#faded-triangle)',
+
+    preventOverlap,
+    applyBranchlessClass,
+    cx, cy, fixCirclePosition,
+    px1, py1, fixPointerStartPosition,
+    px2, py2, fixPointerEndPosition,
+    fixIdPosition, tagY, getUniqueSetItems;
+
+  preventOverlap = function preventOverlap(commit, view) {
+    var commitData = view.commitData,
+      baseLine = view.baseLine,
+      shift = view.commitRadius * 4.5,
+      overlapped = null;
+
+    for (var i = 0; i < commitData.length; i++) {
+      var c = commitData[i];
+      if (c.cx === commit.cx && c.cy === commit.cy && c !== commit) {
+        overlapped = c;
+        break;
+      }
+    }
+
+    if (overlapped) {
+      var oParent = view.getCommit(overlapped.parent),
+        parent = view.getCommit(commit.parent);
+
+      if (overlapped.cy < baseLine) {
+        overlapped = oParent.cy < parent.cy ? overlapped : commit;
+        overlapped.cy -= shift;
+      } else {
+        overlapped = oParent.cy > parent.cy ? overlapped : commit;
+        overlapped.cy += shift;
+      }
+
+      preventOverlap(overlapped, view);
+    }
+  };
+
+  applyBranchlessClass = function(selection) {
+    if (selection.empty()) {
+      return;
+    }
+
+    selection.classed('branchless', function(d) {
+      return d.branchless;
+    });
+
+    if (selection.classed('commit-pointer')) {
+      selection.attr('marker-end', function(d) {
+        return d.branchless ? FADED_MARKER_END : REG_MARKER_END;
+      });
+    } else if (selection.classed('merge-pointer')) {
+      selection.attr('marker-end', function(d) {
+        return d.branchless ? FADED_MARKER_END : MERGE_MARKER_END;
+      });
+    }
+  };
+
+  cx = function(commit, view) {
+    var parent = view.getCommit(commit.parent),
+      parentCX = parent.cx;
+
+    if (typeof commit.parent2 === 'string') {
+      var parent2 = view.getCommit(commit.parent2);
+
+      parentCX = parent.cx > parent2.cx ? parent.cx : parent2.cx;
+    }
+
+    return parentCX + (view.commitRadius * 4.5);
+  };
+
+  cy = function(commit, view) {
+    var parent = view.getCommit(commit.parent),
+      parentCY = parent.cy || cy(parent, view),
+      baseLine = view.baseLine,
+      shift = view.commitRadius * 4.5,
+      branches = [], // count the existing branches
+      branchIndex = 0;
+
+    for (var i = 0; i < view.commitData.length; i++) {
+      var d = view.commitData[i];
+
+      if (d.parent === commit.parent) {
+        branches.push(d.id);
+      }
+    }
+
+    branchIndex = branches.indexOf(commit.id);
+
+    if (commit.isNoFFBranch === true) {
+      branchIndex++;
+    }
+    if (commit.isNoFFCommit === true) {
+      branchIndex--;
+    }
+
+    if (parentCY === baseLine) {
+      var direction = 1;
+      for (var bi = 0; bi < branchIndex; bi++) {
+        direction *= -1;
+      }
+
+      shift *= Math.ceil(branchIndex / 2);
+
+      return parentCY + (shift * direction);
+    }
+
+    if (parentCY < baseLine) {
+      return parentCY - (shift * branchIndex);
+    } else if (parentCY > baseLine) {
+      return parentCY + (shift * branchIndex);
+    }
+  };
+
+  fixCirclePosition = function(selection) {
+    selection
+      .attr('cx', function(d) {
+        return d.cx;
+      })
+      .attr('cy', function(d) {
+        return d.cy;
+      });
+  };
+
+  // calculates the x1 point for commit pointer lines
+  px1 = function(commit, view, pp) {
+    pp = pp || 'parent';
+
+    var parent = view.getCommit(commit[pp]),
+      startCX = commit.cx,
+      diffX = startCX - parent.cx,
+      diffY = parent.cy - commit.cy,
+      length = Math.sqrt((diffX * diffX) + (diffY * diffY));
+
+    return startCX - (view.pointerMargin * (diffX / length));
+  };
+
+  // calculates the y1 point for commit pointer lines
+  py1 = function(commit, view, pp) {
+    pp = pp || 'parent';
+
+    var parent = view.getCommit(commit[pp]),
+      startCY = commit.cy,
+      diffX = commit.cx - parent.cx,
+      diffY = parent.cy - startCY,
+      length = Math.sqrt((diffX * diffX) + (diffY * diffY));
+
+    return startCY + (view.pointerMargin * (diffY / length));
+  };
+
+  fixPointerStartPosition = function(selection, view) {
+    selection.attr('x1', function(d) {
+      return px1(d, view);
+    }).attr('y1', function(d) {
+      return py1(d, view);
+    });
+  };
+
+  px2 = function(commit, view, pp) {
+    pp = pp || 'parent';
+
+    var parent = view.getCommit(commit[pp]),
+      endCX = parent.cx,
+      diffX = commit.cx - endCX,
+      diffY = parent.cy - commit.cy,
+      length = Math.sqrt((diffX * diffX) + (diffY * diffY));
+
+    return endCX + (view.pointerMargin * 1.2 * (diffX / length));
+  };
+
+  py2 = function(commit, view, pp) {
+    pp = pp || 'parent';
+
+    var parent = view.getCommit(commit[pp]),
+      endCY = parent.cy,
+      diffX = commit.cx - parent.cx,
+      diffY = endCY - commit.cy,
+      length = Math.sqrt((diffX * diffX) + (diffY * diffY));
+
+    return endCY - (view.pointerMargin * 1.2 * (diffY / length));
+  };
+
+  fixPointerEndPosition = function(selection, view) {
+    selection.attr('x2', function(d) {
+      return px2(d, view);
+    }).attr('y2', function(d) {
+      return py2(d, view);
+    });
+  };
+
+  fixIdPosition = function(selection, view, delta) {
+    selection.attr('x', function(d) {
+      return d.cx;
+    }).attr('y', function(d) {
+      return d.cy + view.commitRadius + delta;
+    });
+  };
+
+  tagY = function tagY(t, view) {
+    var commit = view.getCommit(t.commit),
+      commitCY = commit.cy,
+      tags = commit.tags,
+      tagIndex = tags.indexOf(t.name);
+
+    if (tagIndex === -1) {
+      tagIndex = tags.length;
+    }
+
+    if (commitCY < (view.baseLine)) {
+      return commitCY - 45 - (tagIndex * 25);
+    } else {
+      return commitCY + 50 + (tagIndex * 25);
+    }
+  };
+
+  getUniqueSetItems = function(set1, set2) {
+    var uniqueSet1 = JSON.parse(JSON.stringify(set1))
+    var uniqueSet2 = JSON.parse(JSON.stringify(set2))
+    for (var id in set1) {
+      delete uniqueSet2[id]
+    }
+    for (var id in set2) {
+      delete uniqueSet1[id]
+    }
+    return [uniqueSet1, uniqueSet2]
+  };
+
+  /**
+   * @class Workspace
+   * @constructor
+   */
+  function Workspace(config) {
+    this.historyView = config.historyView;
+    this.originView = config.originView;
+  }
+
+  Workspace.prototype = {
+    /**
+     * @method render
+     * @param container {String} selector for the container to render the SVG into
+     */
+    render: function(container) {
+      var svgContainer, svg, curr_ws, stash, index;
+
+      svgContainer = container.select('svg-container');
+
+      svg = svgContainer.append('svg:svg');
+
+      svg.attr('id', this.name)
+        .attr('width', this.width)
+        .attr('height', this.isRemote ? this.height + 150 : this.height);
+
+      stash = svg.append('svg:g').classed('stash', true)
+      stash.append('svg:rect')
+      	  .attr('width', 100)
+      	  .attr('height', 100)
+      	  .attr('x', 100)
+	  .attr('y', 200)
+	  .attr('fill', 'blue')
+	  .attr('stroke', 'red');
+
+      curr_ws = svg.append('svg:g').classed('curr_ws', true)
+      curr_ws.append('svg:rect')
+      	  .attr('width', 100)
+      	  .attr('height', 100)
+      	  .attr('x', 100)
+	  .attr('y', 200)
+	  .attr('fill', 'red')
+	  .attr('stroke', 'blue');
+
+      index = svg.append('svg:g').classed('index', true)
+      index.append('svg:rect')
+      	  .attr('width', 100)
+      	  .attr('height', 100)
+      	  .attr('x', 100)
+	  .attr('y', 200)
+	  .attr('rx', 20)
+	  .attr('ry', 20)
+	  .attr('fill', 'blue')
+	  .attr('stroke', 'red');
+      this.svgContainer = svgContainer;
+      this.svg = svg;
+      this.curr_ws = curr_ws;
+      this.stash = stash
+      this.index = index
+      //this.arrowBox = svg.append('svg:g').classed('pointers', true);
+      //this.commitBox = svg.append('svg:g').classed('commits', true);
+      //this.tagBox = svg.append('svg:g').classed('tags', true);
+
+      //this.renderCommits();
+
+      //this._setCurrentBranch(this.currentBranch);
+    },
+
+    destroy: function() {
+      this.svg.remove();
+      this.svgContainer.remove();
+      clearInterval(this.refreshSizeTimer);
+
+      for (var prop in this) {
+        if (this.hasOwnProperty(prop)) {
+          this[prop] = null;
+        }
+      }
+    },
+
+    _calculatePositionData: function() {
+      for (var i = 0; i < this.commitData.length; i++) {
+        var commit = this.commitData[i];
+        commit.cx = cx(commit, this);
+        commit.cy = cy(commit, this);
+        preventOverlap(commit, this);
+      }
+    },
+
+    _resizeSvg: function() {
+      var ele = document.getElementById(this.svg.node().id);
+      var container = ele.parentNode;
+      var currentWidth = ele.offsetWidth;
+      var newWidth;
+
+      if (ele.getBBox().width > container.offsetWidth)
+        newWidth = Math.round(ele.getBBox().width);
+      else
+        newWidth = container.offsetWidth - 5;
+
+      if (currentWidth != newWidth) {
+        this.svg.attr('width', newWidth);
+        container.scrollLeft = container.scrollWidth;
+      }
+    },
+
+    _renderIdLabels: function() {
+      this._renderText('id-label', function(d) {
+        return d.id + '..';
+      }, 14);
+      this._renderText('message-label', function(d) {
+        return d.message;
+      }, 24);
+    },
+
+    _renderText: function(className, getText, delta) {
+      var view = this,
+        existingTexts,
+        newtexts;
+
+      existingTexts = this.commitBox.selectAll('text.' + className)
+        .data(this.commitData, function(d) {
+          return d.id;
+        })
+        .text(getText);
+
+      existingTexts.transition().call(fixIdPosition, view, delta);
+
+      newtexts = existingTexts.enter()
+        .insert('svg:text', ':first-child')
+        .classed(className, true)
+        .text(getText)
+        .call(fixIdPosition, view, delta);
+
+      existingTexts.exit()
+        .remove()
+    },
+
+  };
+
+  return Workspace;
+});
