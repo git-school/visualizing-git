@@ -238,6 +238,11 @@ define(['d3'], function() {
   function Workspace(config) {
     this.historyView = config.historyView;
     this.originView = config.originView;
+    this.name = config.name || 'UnnamedWorkspace';
+    this.width = config.width;
+    this.height = config.height || 400;
+    //this.width = this.historyView.width;
+    //this.height = this.historyView.height || 400;
   }
 
   Workspace.prototype = {
@@ -248,42 +253,48 @@ define(['d3'], function() {
     render: function(container) {
       var svgContainer, svg, curr_ws, stash, index;
 
-      svgContainer = container.select('svg-container');
+      //svgContainer = container.select('svg-container');
+      svgContainer = container.append('div')
+        .classed('ws-container', true);
 
       svg = svgContainer.append('svg:svg');
 
       svg.attr('id', this.name)
-        .attr('width', this.width)
-        .attr('height', this.isRemote ? this.height + 150 : this.height);
+        .attr('width', "100%")
+        .attr('height', "100%");
+        //.attr('width', this.width)
+        //.attr('height', this.height);
 
       stash = svg.append('svg:g').classed('stash', true)
+      stash.append('svg:text')
+	        .classed('workspace-label', true)
+          .text('Stash');
       stash.append('svg:rect')
-      	  .attr('width', 100)
-      	  .attr('height', 100)
-      	  .attr('x', 100)
-	  .attr('y', 200)
-	  .attr('fill', 'blue')
-	  .attr('stroke', 'red');
+      	  .attr('width', "31%")
+      	  .attr('height', "100%")
+      	  .attr('x', 0)
+	        .attr('y', 0);
 
-      curr_ws = svg.append('svg:g').classed('curr_ws', true)
+      curr_ws = svg.append('svg:g').classed('curr-ws', true)
+      curr_ws.append('svg:text')
+	        .classed('workspace-label', true)
+          .text('Workspace');
       curr_ws.append('svg:rect')
-      	  .attr('width', 100)
-      	  .attr('height', 100)
-      	  .attr('x', 100)
-	  .attr('y', 200)
-	  .attr('fill', 'red')
-	  .attr('stroke', 'blue');
+      	  .attr('width', "31%")
+      	  .attr('height', "100%")
+      	  .attr('x', this.width/3)
+	        .attr('y', 0);
 
       index = svg.append('svg:g').classed('index', true)
+      index.append('svg:text')
+	        .classed('workspace-label', true)
+          .text('Index');
       index.append('svg:rect')
-      	  .attr('width', 100)
-      	  .attr('height', 100)
-      	  .attr('x', 100)
-	  .attr('y', 200)
-	  .attr('rx', 20)
-	  .attr('ry', 20)
-	  .attr('fill', 'blue')
-	  .attr('stroke', 'red');
+      	  .attr('width', "31%")
+      	  .attr('height', "100%")
+      	  .attr('x', 2 * this.width/3)
+	        .attr('y', 0);
+
       this.svgContainer = svgContainer;
       this.svg = svg;
       this.curr_ws = curr_ws;

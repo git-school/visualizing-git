@@ -48,7 +48,10 @@ ControlBox, Workspace, d3) {
     workspace = new Workspace({
       historyView: historyView,
       originView: originView,
-      undoHistory: args.undoHistory
+      undoHistory: args.undoHistory,
+      name: name + '-Workspace',
+      width: 300,
+      height: 400
     });
     window.ws = workspace
 

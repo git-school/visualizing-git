@@ -530,6 +530,9 @@ define(['d3'], function() {
         .attr('width', this.width)
         .attr('height', this.isRemote ? this.height + 150 : this.height);
 
+      console.log(this.width);
+      console.log(this.height);
+
       if (this.isRemote) {
         svg.append('svg:text')
           .classed('remote-name-display', true)

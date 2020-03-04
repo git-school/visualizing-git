@@ -915,6 +915,12 @@ function(_yargs, d3, demos) {
         this.info("Real git reflog supports the '" + subcommand +
                   "' subcommand but this tool only supports 'show' and 'exists'")
       }
+    },
+
+    add: function(args) {
+      // Create boxes to visualize working tree, index, stash
+      console.log("in add")
+      return
     }
   };
 

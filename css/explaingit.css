@@ -114,6 +114,17 @@ span.cmd {
   left: 20px;
 }
 
+#ExplainGitZen-Container .ws-container {
+  display: inline-block;
+  border: 1px dotted #AAA;
+  position: absolute;
+  top: 500px;
+  bottom: 0;
+  right: 0;
+  left: 250px;
+  margin-left: 0;
+}
+
 .remote-name-display {
   font-weight: bold;
   text-align: right;
@@ -283,6 +294,22 @@ text.message-label {
   font-family: Courier New;
   fill: #666;
   font-size: 10px;
+}
+
+g.stash > rect {
+  fill: #FFCC66;
+  stroke: #CC9900;
+  stroke-width: 2;
+}
+
+g.curr-ws > rect {
+  fill: #7FC9FF;
+  stroke: #0026FF;
+}
+
+g.index > rect {
+  fill: #CCC;
+  stroke: #888;
 }
 
 g.branch-tag > rect {
