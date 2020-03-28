@@ -312,6 +312,11 @@ g.index > rect {
   stroke: #888;
 }
 
+g.blob-space > rect {
+  fill: #8ce08c;
+  stroke: #339900;
+}
+
 g.branch-tag > rect {
   fill: #FFCC66;
   stroke: #CC9900;

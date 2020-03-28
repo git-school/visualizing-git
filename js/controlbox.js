@@ -20,6 +20,7 @@ function(_yargs, d3, demos) {
   function ControlBox(config) {
     this.historyView = config.historyView;
     this.originView = config.originView;
+    this.workspace = config.workspace;
     this.initialMessage = config.initialMessage || 'Enter git commands below.';
     this._commandHistory = [];
     this._currentCommand = -1;
@@ -919,7 +920,33 @@ function(_yargs, d3, demos) {
 
     add: function(args) {
       // Create boxes to visualize working tree, index, stash
-      console.log("in add")
+      console.log("in add");
+      var workspace = this.workspace;
+
+      console.log(workspace);
+      workspace.addBlob(workspace.curr_ws, workspace.index, true);
+
+
+      return
+    },
+
+    stash: function(args) {
+      // Create boxes to visualize working tree, index, stash
+      console.log("in stash");
+      var workspace = this.workspace;
+
+      console.log(workspace);
+      workspace.addBlob(workspace.curr_ws, workspace.stash, true);
+      return
+    },
+
+    edit: function(args) {
+      // Create boxes to visualize working tree, index, stash
+      console.log("in edit");
+      var workspace = this.workspace;
+
+      console.log(workspace);
+      workspace.addBlob(null, workspace.curr_ws);
       return
     }
   };

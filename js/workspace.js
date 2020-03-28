@@ -1,4 +1,4 @@
-define(['d3'], function() {
+define(['historyview', 'd3'], function(HistoryView) {
   "use strict";
 
   var REG_MARKER_END = 'url(#triangle)',
@@ -203,20 +203,13 @@ define(['d3'], function() {
   };
 
   tagY = function tagY(t, view) {
-    var commit = view.getCommit(t.commit),
-      commitCY = commit.cy,
-      tags = commit.tags,
-      tagIndex = tags.indexOf(t.name);
+    var blobs = view.getBlobs,
+      blobIndex = blobs.indexOf(t.blob);
 
-    if (tagIndex === -1) {
-      tagIndex = tags.length;
+    if (blobIndex === -1) {
+      blobIndex = blobs.length;
     }
-
-    if (commitCY < (view.baseLine)) {
-      return commitCY - 45 - (tagIndex * 25);
-    } else {
-      return commitCY + 50 + (tagIndex * 25);
-    }
+    return t.blob.y - 45 - (blobIndex * 25);
   };
 
   getUniqueSetItems = function(set1, set2) {
@@ -264,47 +257,66 @@ define(['d3'], function() {
         .attr('height', "100%");
         //.attr('width', this.width)
         //.attr('height', this.height);
+      var labelX = 15;
+      var labelY = 25;
+            
 
-      stash = svg.append('svg:g').classed('stash', true)
-      stash.append('svg:text')
-	        .classed('workspace-label', true)
-          .text('Stash');
+      stash = svg.append('svg:g').classed('stash', true).attr('id', 'stash')
       stash.append('svg:rect')
       	  .attr('width', "31%")
       	  .attr('height', "100%")
       	  .attr('x', 0)
 	        .attr('y', 0);
+      stash.append('svg:text')
+	      .classed('workspace-label', true)
+          .text('Stash')
+          .attr('x', labelX)
+          .attr('y', labelY);
+      stash.append('svg:g').classed('blob-space', true).attr('id', 'stash.blob-space');
 
       curr_ws = svg.append('svg:g').classed('curr-ws', true)
-      curr_ws.append('svg:text')
-	        .classed('workspace-label', true)
-          .text('Workspace');
+                    .attr('id', 'curr_ws')
+                    .attr('transform', 'translate(750, 0)');
       curr_ws.append('svg:rect')
       	  .attr('width', "31%")
       	  .attr('height', "100%")
-      	  .attr('x', this.width/3)
+      	  .attr('x', 0)
 	        .attr('y', 0);
+      curr_ws.append('svg:text')
+	      .classed('workspace-label', true)
+          .text('Workspace')
+          .attr('x', labelX)
+          .attr('y', labelY);
+      curr_ws.append('svg:g').classed('blob-space', true).attr('id', 'curr_ws.blob-space');
 
       index = svg.append('svg:g').classed('index', true)
-      index.append('svg:text')
-	        .classed('workspace-label', true)
-          .text('Index');
+                    .attr('id', 'index')
+                    .attr('transform', 'translate(1500, 0)');
       index.append('svg:rect')
       	  .attr('width', "31%")
       	  .attr('height', "100%")
-      	  .attr('x', 2 * this.width/3)
-	        .attr('y', 0);
+      	  .attr('x', 0)
+          .attr('y', 0);
+      index.append('svg:text')
+	      .classed('workspace-label', true)
+          .text('Index')
+          .attr('x', labelX)
+          .attr('y', labelY);
+      index.append('svg:g').classed('blob-space', true).attr('id', 'index.blob-space');
 
       this.svgContainer = svgContainer;
       this.svg = svg;
       this.curr_ws = curr_ws;
+      this.curr_ws.blobs = this.curr_ws.blobs || []
       this.stash = stash
+      this.stash.blobs = this.stash.blobs || []
       this.index = index
+      this.index.blobs = this.index.blobs || []
       //this.arrowBox = svg.append('svg:g').classed('pointers', true);
       //this.commitBox = svg.append('svg:g').classed('commits', true);
       //this.tagBox = svg.append('svg:g').classed('tags', true);
 
-      //this.renderCommits();
+      this.renderBlobs();
 
       //this._setCurrentBranch(this.currentBranch);
     },
@@ -319,6 +331,42 @@ define(['d3'], function() {
           this[prop] = null;
         }
       }
+    },
+
+    addNewBlob: function(ws) {
+      console.log("adding new blob to " + ws);
+      if (ws.blobs === undefined || !ws.blobs) {
+        ws.blobs = [];
+      }
+      ws.blobs.push(HistoryView.generateId());
+      console.log(ws.blobs);
+    },
+
+    addBlob: function(src, dst, moveAll = false) {
+      if (src === null) {
+        // Adding a brand new blob
+        this.addNewBlob(dst);
+      } else {
+        // Moving an existing blob from 'src' to 'dst'
+        if (src.blobs === undefined || src.blobs.length == 0) {
+          console.log("no blobs to move");
+        } else if (moveAll) {
+          dst.blobs = src.blobs;
+          src.blobs = [];
+          console.log("Moving all blobs");
+        } else {
+          if (dst.blobs === undefined) {
+            dst.blobs = [];
+          }
+          dst.blobs.push(src.blobs.pop());
+          console.log("Moving top blob");
+        }
+        console.log("src:");
+        console.log(src.blobs);
+        console.log("dst:");
+        console.log(dst.blobs);
+      }
+      this.renderBlobs();
     },
 
     _calculatePositionData: function() {
@@ -345,6 +393,34 @@ define(['d3'], function() {
         this.svg.attr('width', newWidth);
         container.scrollLeft = container.scrollWidth;
       }
+    },
+
+    renderBlobs: function() {
+      var view = this,
+        existingBlobs,
+        newBlobs,
+        curr_workspace = this.stash,
+        workspaces = [this.stash, this.curr_ws, this.index];
+      console.log("rendering blobs");
+
+      workspaces.forEach(function(ws) {
+        console.log(ws.blobs);
+        // Bind the data
+        var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
+        // Enter 
+        blob_rect.enter().append("svg:rect")
+              .attr("width", function(d) { console.log(d); return 200;})
+              .attr("height", 75)
+              .attr("fill", "blue")
+              .attr("id", function(d) { return "blob-" + d; })
+              .classed("rendered-blob", true);
+        // Update
+        blob_rect
+              .attr("x", 50)
+              .attr("y", function(d) { return 50 + ws.blobs.indexOf(d) * 100; });
+        // Remove
+        blob_rect.exit().remove();
+      });
     },
 
     _renderIdLabels: function() {

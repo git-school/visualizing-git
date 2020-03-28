@@ -37,14 +37,6 @@ ControlBox, Workspace, d3) {
       window.ov = originView;
     }
 
-    controlBox = new ControlBox({
-      historyView: historyView,
-      originView: originView,
-      initialMessage: args.initialMessage,
-      undoHistory: args.undoHistory
-    });
-    window.cb = controlBox;
-
     workspace = new Workspace({
       historyView: historyView,
       originView: originView,
@@ -54,6 +46,15 @@ ControlBox, Workspace, d3) {
       height: 400
     });
     window.ws = workspace
+
+    controlBox = new ControlBox({
+      historyView: historyView,
+      originView: originView,
+      workspace: workspace,
+      initialMessage: args.initialMessage,
+      undoHistory: args.undoHistory
+    });
+    window.cb = controlBox;
 
     controlBox.render(playground);
     historyView.render(playground);
