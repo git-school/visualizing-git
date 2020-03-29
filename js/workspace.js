@@ -307,10 +307,13 @@ define(['historyview', 'd3'], function(HistoryView) {
       this.svgContainer = svgContainer;
       this.svg = svg;
       this.curr_ws = curr_ws;
+      this.curr_ws.name = "workspace"
       this.curr_ws.blobs = this.curr_ws.blobs || []
       this.stash = stash
+      this.stash.name = "stash"
       this.stash.blobs = this.stash.blobs || []
       this.index = index
+      this.index.name = "index"
       this.index.blobs = this.index.blobs || []
       //this.arrowBox = svg.append('svg:g').classed('pointers', true);
       //this.commitBox = svg.append('svg:g').classed('commits', true);
@@ -351,9 +354,13 @@ define(['historyview', 'd3'], function(HistoryView) {
         if (src.blobs === undefined || src.blobs.length == 0) {
           console.log("no blobs to move");
         } else if (moveAll) {
-          dst.blobs = src.blobs;
-          src.blobs = [];
-          console.log("Moving all blobs");
+            if (dst.name === "stash" || dst.name == "index") {
+              dst.blobs.push(src.blobs);
+            } else {
+              dst.blobs = src.blobs;
+            }
+            src.blobs = [];
+            console.log("Moving all blobs");
         } else {
           if (dst.blobs === undefined) {
             dst.blobs = [];
@@ -361,10 +368,6 @@ define(['historyview', 'd3'], function(HistoryView) {
           dst.blobs.push(src.blobs.pop());
           console.log("Moving top blob");
         }
-        console.log("src:");
-        console.log(src.blobs);
-        console.log("dst:");
-        console.log(dst.blobs);
       }
       this.renderBlobs();
     },
@@ -400,10 +403,12 @@ define(['historyview', 'd3'], function(HistoryView) {
         existingBlobs,
         newBlobs,
         curr_workspace = this.stash,
-        workspaces = [this.stash, this.curr_ws, this.index];
+        workspaces = [this.curr_ws],
+        changeset_workspaces = [this.stash, this.index];
       console.log("rendering blobs");
 
       workspaces.forEach(function(ws) {
+        console.log(ws.name);
         console.log(ws.blobs);
         // Bind the data
         var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
@@ -411,9 +416,26 @@ define(['historyview', 'd3'], function(HistoryView) {
         blob_rect.enter().append("svg:rect")
               .attr("width", function(d) { console.log(d); return 200;})
               .attr("height", 75)
-              .attr("fill", "blue")
               .attr("id", function(d) { return "blob-" + d; })
               .classed("rendered-blob", true);
+        // Update
+        blob_rect
+              .attr("x", 50)
+              .attr("y", function(d) { return 50 + ws.blobs.indexOf(d) * 100; });
+        // Remove
+        blob_rect.exit().remove();
+      });
+      changeset_workspaces.forEach(function(ws) {
+        console.log(ws.name);
+        console.log(ws.blobs);
+        // Bind the data
+        var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
+        // Enter 
+        blob_rect.enter().append("svg:rect")
+              .attr("width", function(d) { console.log(d); return 200;})
+              .attr("height", 75)
+              .attr("id", function(d) { return "changeset-" + d; })
+              .classed("rendered-changeset", true);
         // Update
         blob_rect
               .attr("x", 50)
