@@ -558,6 +558,8 @@ function(_yargs, d3, demos) {
             break;
           case '--hard':
             this.doReset(args.join(' '));
+            workspace.removeAllBlobs(workspace.curr_ws);
+            workspace.removeAllBlobs(workspace.index);
             args.length = 0;
             break;
           default:
@@ -565,6 +567,8 @@ function(_yargs, d3, demos) {
             args.length = 0;
             this.info('Assuming "--hard".');
             this.doReset(remainingArgs.join(' '));
+            workspace.removeAllBlobs(workspace.curr_ws);
+            workspace.removeAllBlobs(workspace.index);
         }
       }
     },
