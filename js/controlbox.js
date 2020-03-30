@@ -251,6 +251,8 @@ function(_yargs, d3, demos) {
         this.info('`git rev_parse`')
         this.info('`git revert`')
         this.info('`git tag`')
+        this.info('`git add`')
+        this.info('`git stash`')
         return
       }
 
@@ -379,6 +381,7 @@ function(_yargs, d3, demos) {
           this.getRepoView().amendCommit(opts.m || this.getRepoView().getCommit('head').message)
         } else {
           this.getRepoView().commit(null, opts.m);
+          workspace.removeAllBlobs(workspace.index);
         }
       }, function(before, after) {
         var reflogMsg = 'commit: ' + msg
@@ -939,6 +942,8 @@ function(_yargs, d3, demos) {
         } else {
           console.log("Invalid stash to drop");
         }
+      } else if (args && args[0] === "clear") {
+        workspace.removeAllBlobs(workspace.stash);
       } else {
         workspace.addBlob(workspace.curr_ws, workspace.stash, true);
       }

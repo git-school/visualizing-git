@@ -390,6 +390,11 @@ define(['historyview', 'd3'], function(HistoryView) {
       this.renderBlobs();
     },
 
+    removeAllBlobs: function(ws) {
+      ws.blobs = []
+      this.renderBlobs();
+    },
+
     _calculatePositionData: function(blobs) {
       for (var i = 0; i < blobs.length; i++) {
         var blob = blobs[i];
@@ -486,7 +491,7 @@ define(['historyview', 'd3'], function(HistoryView) {
       }, 14);
       this._renderText(ws, 'message-label', function(d) {
         if (ws.name === "stash") {
-          return "{" + ws.blobs.indexOf(d) + "}";
+          return "stash@{" + ws.blobs.indexOf(d) + "}";
         }
         return "filename";
       }, 24);
