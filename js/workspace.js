@@ -7,7 +7,7 @@ define(['historyview', 'd3'], function(HistoryView) {
 
     preventOverlap,
     applyBranchlessClass,
-    cx, cy, fixCirclePosition,
+    cx, cy, fixBlobPosition,
     px1, py1, fixPointerStartPosition,
     px2, py2, fixPointerEndPosition,
     fixIdPosition, tagY, getUniqueSetItems;
@@ -118,13 +118,13 @@ define(['historyview', 'd3'], function(HistoryView) {
     }
   };
 
-  fixCirclePosition = function(selection) {
+  fixBlobPosition = function(selection) {
     selection
-      .attr('cx', function(d) {
-        return d.cx;
+      .attr('x', function(d) {
+        return d.x;
       })
-      .attr('cy', function(d) {
-        return d.cy;
+      .attr('y', function(d) {
+        return d.y;
       });
   };
 
@@ -196,9 +196,9 @@ define(['historyview', 'd3'], function(HistoryView) {
 
   fixIdPosition = function(selection, view, delta) {
     selection.attr('x', function(d) {
-      return d.cx;
+      return d.x + view.blob_width / 2;
     }).attr('y', function(d) {
-      return d.cy + view.commitRadius + delta;
+      return d.y + view.blob_height + delta;
     });
   };
 
@@ -236,6 +236,8 @@ define(['historyview', 'd3'], function(HistoryView) {
     this.height = config.height || 400;
     //this.width = this.historyView.width;
     //this.height = this.historyView.height || 400;
+    this.blob_height = config.blob_height || 75;
+    this.blob_width = config.blob_height || 200;
   }
 
   Workspace.prototype = {
@@ -337,11 +339,12 @@ define(['historyview', 'd3'], function(HistoryView) {
     },
 
     addNewBlob: function(ws) {
-      console.log("adding new blob to " + ws);
+      console.log("adding new blob to " + ws.name);
       if (ws.blobs === undefined || !ws.blobs) {
         ws.blobs = [];
       }
-      ws.blobs.push(HistoryView.generateId());
+      var blob = {'id': HistoryView.generateId(), 'x': 50, 'y': 50}
+      ws.blobs.push(blob);
       console.log(ws.blobs);
     },
 
@@ -354,8 +357,9 @@ define(['historyview', 'd3'], function(HistoryView) {
         if (src.blobs === undefined || src.blobs.length == 0) {
           console.log("no blobs to move");
         } else if (moveAll) {
-            if (dst.name === "stash" || dst.name == "index") {
-              dst.blobs.push(src.blobs);
+            if (dst.name === "stash") {
+              // stash is treated like a stack of changesets (group of blobs)
+              dst.blobs.unshift(src.blobs);
             } else {
               dst.blobs = src.blobs;
             }
@@ -365,19 +369,28 @@ define(['historyview', 'd3'], function(HistoryView) {
           if (dst.blobs === undefined) {
             dst.blobs = [];
           }
-          dst.blobs.push(src.blobs.pop());
+          if (src.name == "stash") {
+            var top_blob = src.blobs.shift();
+          } else {
+            var top_blob = src.blobs.pop();
+          }
+          if (Array.isArray(top_blob)) {
+            dst.blobs = dst.blobs.concat(top_blob);
+          } else {
+            dst.blobs.push(top_blob);
+          }
           console.log("Moving top blob");
         }
       }
       this.renderBlobs();
     },
 
-    _calculatePositionData: function() {
-      for (var i = 0; i < this.commitData.length; i++) {
-        var commit = this.commitData[i];
-        commit.cx = cx(commit, this);
-        commit.cy = cy(commit, this);
-        preventOverlap(commit, this);
+    _calculatePositionData: function(blobs) {
+      for (var i = 0; i < blobs.length; i++) {
+        var blob = blobs[i];
+        blob.x = 50;
+        blob.y = 50 + i * 125;
+        //preventOverlap(commit, this);
       }
     },
 
@@ -403,8 +416,8 @@ define(['historyview', 'd3'], function(HistoryView) {
         existingBlobs,
         newBlobs,
         curr_workspace = this.stash,
-        workspaces = [this.curr_ws],
-        changeset_workspaces = [this.stash, this.index];
+        workspaces = [this.curr_ws, this.index],
+        changeset_workspaces = [this.stash];
       console.log("rendering blobs");
 
       workspaces.forEach(function(ws) {
@@ -414,16 +427,21 @@ define(['historyview', 'd3'], function(HistoryView) {
         var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
         // Enter 
         blob_rect.enter().append("svg:rect")
-              .attr("width", function(d) { console.log(d); return 200;})
-              .attr("height", 75)
-              .attr("id", function(d) { return "blob-" + d; })
+              .attr("width", function(d) { console.log(d); return view.blob_width;})
+              .attr("height", view.blob_height)
+              .attr("id", function(d) { return "blob-" + d.id; })
               .classed("rendered-blob", true);
         // Update
-        blob_rect
-              .attr("x", 50)
-              .attr("y", function(d) { return 50 + ws.blobs.indexOf(d) * 100; });
+        view._calculatePositionData(ws.blobs);
+        blob_rect.transition()
+              .duration(500)
+              .call(fixBlobPosition);
+        //blob_rect
+              //.attr("x", 50)
+              //.attr("y", function(d) { return 50 + ws.blobs.indexOf(d) * 100; });
         // Remove
         blob_rect.exit().remove();
+        view._renderIdLabels(ws);
       });
       changeset_workspaces.forEach(function(ws) {
         console.log(ws.name);
@@ -432,37 +450,50 @@ define(['historyview', 'd3'], function(HistoryView) {
         var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
         // Enter 
         blob_rect.enter().append("svg:rect")
-              .attr("width", function(d) { console.log(d); return 200;})
-              .attr("height", 75)
+              .attr("width", function(d) { console.log(d); return view.blob_width;})
+              .attr("height", view.blob_height)
               .attr("id", function(d) { return "changeset-" + d; })
               .classed("rendered-changeset", true);
         // Update
-        blob_rect
-              .attr("x", 50)
-              .attr("y", function(d) { return 50 + ws.blobs.indexOf(d) * 100; });
+        view._calculatePositionData(ws.blobs);
+        blob_rect.transition()
+              .duration(500)
+              .call(fixBlobPosition);
+        //blob_rect
+              //.attr("x", 50)
+              //.attr("y", function(d) { return 50 + ws.blobs.indexOf(d) * 100; });
         // Remove
         blob_rect.exit().remove();
+        view._renderIdLabels(ws);
       });
     },
 
-    _renderIdLabels: function() {
-      this._renderText('id-label', function(d) {
+    _renderIdLabels: function(ws) {
+      this._renderText(ws, 'id-label', function(d) {
+        if (Array.isArray(d)) {
+          var ret_str = "";
+          d.forEach( function(blob) {
+            ret_str += blob.id + ',';
+          });
+          return ret_str.substr(0, 16);
+        }
         return d.id + '..';
       }, 14);
-      this._renderText('message-label', function(d) {
-        return d.message;
+      this._renderText(ws, 'message-label', function(d) {
+        if (ws.name === "stash") {
+          return "{" + ws.blobs.indexOf(d) + "}";
+        }
+        return "filename";
       }, 24);
     },
 
-    _renderText: function(className, getText, delta) {
+    _renderText: function(ws, className, getText, delta) {
       var view = this,
         existingTexts,
         newtexts;
 
-      existingTexts = this.commitBox.selectAll('text.' + className)
-        .data(this.commitData, function(d) {
-          return d.id;
-        })
+      existingTexts = ws.select("g.blob-space").selectAll('text.' + className)
+        .data(ws.blobs)
         .text(getText);
 
       existingTexts.transition().call(fixIdPosition, view, delta);
