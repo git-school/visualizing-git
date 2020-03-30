@@ -933,6 +933,12 @@ function(_yargs, d3, demos) {
       var workspace = this.workspace;
       if (args && args[0] === "pop") {
         workspace.addBlob(workspace.stash, workspace.curr_ws);
+      } else if (args && args[0] === "drop") {
+        if (args[1] != undefined) {
+          workspace.removeBlob(workspace.stash, args[1]);
+        } else {
+          console.log("Invalid stash to drop");
+        }
       } else {
         workspace.addBlob(workspace.curr_ws, workspace.stash, true);
       }

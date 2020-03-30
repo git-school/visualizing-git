@@ -385,6 +385,11 @@ define(['historyview', 'd3'], function(HistoryView) {
       this.renderBlobs();
     },
 
+    removeBlob: function(ws, index_to_remove) {
+      ws.blobs.splice(index_to_remove, 1);
+      this.renderBlobs();
+    },
+
     _calculatePositionData: function(blobs) {
       for (var i = 0; i < blobs.length; i++) {
         var blob = blobs[i];
