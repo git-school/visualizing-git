@@ -543,21 +543,19 @@ function(_yargs, d3, demos) {
 
         switch (arg) {
           case '--soft':
-            this.info(
-              'The "--soft" flag works in real git, but ' +
-              'I am unable to show you how it works in this demo. ' +
-              'So I am just going to show you what "--hard" looks like instead.'
-            );
+            // no resetting of the index or working tree
+            this.doReset(args.join(' '));
+            args.length = 0;
             break;
           case '--mixed':
-            this.info(
-              'The "--mixed" flag works in real git, but ' +
-              'I am unable to show you how it works in this demo. ' +
-              'So I am just going to show you what "--hard" looks like instead.'
-            );
+            // reset just the index
+            this.doReset(args.join(' '));
+            workspace.removeAllBlobs(workspace.index);
+            args.length = 0;
             break;
           case '--hard':
             this.doReset(args.join(' '));
+            // reset the index and the working tree
             workspace.removeAllBlobs(workspace.curr_ws);
             workspace.removeAllBlobs(workspace.index);
             args.length = 0;
@@ -567,6 +565,7 @@ function(_yargs, d3, demos) {
             args.length = 0;
             this.info('Assuming "--hard".');
             this.doReset(remainingArgs.join(' '));
+            // reset the index and the working tree
             workspace.removeAllBlobs(workspace.curr_ws);
             workspace.removeAllBlobs(workspace.index);
         }
