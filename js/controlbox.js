@@ -232,6 +232,7 @@ function(_yargs, d3, demos) {
         this.info('pres() = Turn on presenter mode')
         this.info('undo = Undo the last git command')
         this.info('redo = Redo the last undone git command')
+        this.info('edit = Make a file edit')
         this.info('mode = Change mode (`local` or `remote`)')
         this.info('clear = Clear the history pane and reset the visualization')
         this.info()
@@ -300,6 +301,12 @@ function(_yargs, d3, demos) {
           .classed('command-entry', true)
           .html(entry);
         this._scrollToBottom();
+        return
+      }
+
+      if (entry.toLowerCase() === 'edit') {
+        var workspace = this.workspace;
+        workspace.addBlob(null, workspace.curr_ws);
         return
       }
 
@@ -951,15 +958,6 @@ function(_yargs, d3, demos) {
         workspace.addBlob(workspace.curr_ws, workspace.stash, true);
       }
 
-      return
-    },
-
-    edit: function(args) {
-      // Create boxes to visualize working tree, index, stash
-      console.log("in edit");
-      var workspace = this.workspace;
-
-      workspace.addBlob(null, workspace.curr_ws);
       return
     }
   };
