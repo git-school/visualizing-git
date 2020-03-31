@@ -238,6 +238,7 @@ define(['historyview', 'd3'], function(HistoryView) {
     //this.height = this.historyView.height || 400;
     this.blob_height = config.blob_height || 75;
     this.blob_width = config.blob_height || 200;
+    this.filename_counter = 0;
   }
 
   Workspace.prototype = {
@@ -343,12 +344,16 @@ define(['historyview', 'd3'], function(HistoryView) {
       if (ws.blobs === undefined || !ws.blobs) {
         ws.blobs = [];
       }
-      var blob = {'id': HistoryView.generateId(), 'x': 50, 'y': 50}
+      var blob = {'id': HistoryView.generateId(),
+                  'x': 50,
+                  'y': 50,
+                  'filename': 'file_' + this.filename_counter}
+      this.filename_counter += 1;
       ws.blobs.push(blob);
       console.log(ws.blobs);
     },
 
-    addBlob: function(src, dst, moveAll = false) {
+    addBlob: function(src, dst, moveAll=false) {
       if (src === null) {
         // Adding a brand new blob
         this.addNewBlob(dst);
@@ -381,6 +386,19 @@ define(['historyview', 'd3'], function(HistoryView) {
           }
           console.log("Moving top blob");
         }
+      }
+      this.renderBlobs();
+    },
+
+    moveBlobByName: function(src, dst, filename) {
+      var target_blob = src.blobs.filter(function(d) {
+              return d.filename === filename;
+      });
+      if (target_blob && target_blob.length == 1) {
+        // remove from src
+        src.blobs.splice(src.blobs.indexOf(target_blob[0]), 1);
+        // add to dst
+        dst.blobs.push(target_blob[0]);
       }
       this.renderBlobs();
     },
@@ -493,7 +511,7 @@ define(['historyview', 'd3'], function(HistoryView) {
         if (ws.name === "stash") {
           return "stash@{" + ws.blobs.indexOf(d) + "}";
         }
-        return "filename";
+        return d.filename;
       }, 24);
     },
 

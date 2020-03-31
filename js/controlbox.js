@@ -935,8 +935,21 @@ function(_yargs, d3, demos) {
       // Create boxes to visualize working tree, index, stash
       console.log("in add");
       var workspace = this.workspace;
+      while (args.length > 0) {
+        var arg = args.shift();
+        switch (arg) {
+          case '-u':
+          case '.':
+            workspace.addBlob(workspace.curr_ws, workspace.index, true);
+            break;
+          default:  
+            workspace.moveBlobByName(workspace.curr_ws, workspace.index, arg);
+            break;
+        }
 
-      workspace.addBlob(workspace.curr_ws, workspace.index, true);
+      }
+
+      //workspace.addBlob(workspace.curr_ws, workspace.index, true);
       return
     },
 
