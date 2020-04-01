@@ -262,7 +262,7 @@ define(['historyview', 'd3'], function(HistoryView) {
         //.attr('height', this.height);
       var labelX = 15;
       var labelY = 25;
-            
+
 
       stash = svg.append('svg:g').classed('stash', true).attr('id', 'stash')
       stash.append('svg:rect')
@@ -391,6 +391,7 @@ define(['historyview', 'd3'], function(HistoryView) {
     },
 
     moveBlobByName: function(src, dst, filename) {
+      // set dst to undefined to remove the blob
       var target_blob = src.blobs.filter(function(d) {
               return d.filename === filename;
       });
@@ -398,7 +399,9 @@ define(['historyview', 'd3'], function(HistoryView) {
         // remove from src
         src.blobs.splice(src.blobs.indexOf(target_blob[0]), 1);
         // add to dst
-        dst.blobs.push(target_blob[0]);
+        if (dst) {
+          dst.blobs.push(target_blob[0]);
+        }
       }
       this.renderBlobs();
     },
@@ -453,7 +456,7 @@ define(['historyview', 'd3'], function(HistoryView) {
         console.log(ws.blobs);
         // Bind the data
         var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
-        // Enter 
+        // Enter
         blob_rect.enter().append("svg:rect")
               .attr("width", function(d) { console.log(d); return view.blob_width;})
               .attr("height", view.blob_height)
@@ -476,7 +479,7 @@ define(['historyview', 'd3'], function(HistoryView) {
         console.log(ws.blobs);
         // Bind the data
         var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
-        // Enter 
+        // Enter
         blob_rect.enter().append("svg:rect")
               .attr("width", function(d) { console.log(d); return view.blob_width;})
               .attr("height", view.blob_height)

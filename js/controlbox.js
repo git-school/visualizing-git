@@ -483,25 +483,33 @@ function(_yargs, d3, demos) {
     },
 
     checkout: function(args, opts) {
-      if (opts.b) {
-        if (opts._[0]) {
-          this.branch(null, null, opts.b + ' ' + opts._[0])
-        } else {
-          this.branch(null, null, opts.b)
+      if (args && args[0] === "--") {
+        args.shift();
+        while (args.length > 0) {
+          var arg = args.shift();
+          workspace.moveBlobByName(workspace.curr_ws, undefined, arg);
         }
+      } else {
+        if (opts.b) {
+          if (opts._[0]) {
+            this.branch(null, null, opts.b + ' ' + opts._[0])
+          } else {
+            this.branch(null, null, opts.b)
+          }
+        }
+
+        var name = opts.b || opts._[0]
+
+        this.transact(function() {
+          this.getRepoView().checkout(name);
+        }, function(before, after) {
+          this.getRepoView().addReflogEntry(
+            'HEAD', after.commit.id,
+            'checkout: moving from ' + before.ref +
+            ' to ' + name
+          )
+        })
       }
-
-      var name = opts.b || opts._[0]
-
-      this.transact(function() {
-        this.getRepoView().checkout(name);
-      }, function(before, after) {
-        this.getRepoView().addReflogEntry(
-          'HEAD', after.commit.id,
-          'checkout: moving from ' + before.ref +
-          ' to ' + name
-        )
-      })
     },
 
     tag: function(args) {
@@ -942,7 +950,7 @@ function(_yargs, d3, demos) {
           case '.':
             workspace.addBlob(workspace.curr_ws, workspace.index, true);
             break;
-          default:  
+          default:
             workspace.moveBlobByName(workspace.curr_ws, workspace.index, arg);
             break;
         }
