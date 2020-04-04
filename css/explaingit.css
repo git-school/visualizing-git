@@ -88,10 +88,21 @@ span.cmd {
   border: 1px dotted #AAA;
   position: absolute;
   top: 0;
+  right: 0;
+  left: 250px;
+  margin-left: 0;
+  height: 50%;
+}
+
+#ExplainGitZen-Container .ws-container {
+  display: inline-block;
+  border: 1px dotted #AAA;
+  position: absolute;
   bottom: 0;
   right: 0;
   left: 250px;
   margin-left: 0;
+  height: 50%;
 }
 
 #ExplainGitZen-Container .svg-container.remote-container {
@@ -112,17 +123,6 @@ span.cmd {
   bottom: 20px;
   right: 20px;
   left: 20px;
-}
-
-#ExplainGitZen-Container .ws-container {
-  display: inline-block;
-  border: 1px dotted #AAA;
-  position: absolute;
-  top: 500px;
-  bottom: 0;
-  right: 0;
-  left: 250px;
-  margin-left: 0;
 }
 
 .remote-name-display {
