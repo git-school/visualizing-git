@@ -459,14 +459,23 @@ define(['historyview', 'd3'], function(HistoryView) {
         var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
         // Enter
         blob_rect.enter().append("svg:rect")
+              .attr("id", function(d) { return "blob-" + d.id; })
+              .classed("rendered-blob", true)
+              .attr("width", 1)
+              .attr("height", 1)
+              .transition("inflate")
               .attr("width", function(d) { console.log(d); return view.blob_width;})
               .attr("height", view.blob_height)
-              .attr("id", function(d) { return "blob-" + d.id; })
-              .classed("rendered-blob", true);
+              .duration(500);
         // Update
         view._calculatePositionData(ws.blobs);
-        blob_rect.transition()
-              .duration(500)
+        blob_rect
+              //.attr("width", 1)
+              //.attr("height", 1)
+              //.transition("inflate")
+              //.attr("width", function(d) { console.log(d); return view.blob_width;})
+              //.attr("height", view.blob_height)
+              //.duration(500)
               .call(fixBlobPosition);
         //blob_rect
               //.attr("x", 50)
@@ -482,10 +491,14 @@ define(['historyview', 'd3'], function(HistoryView) {
         var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
         // Enter
         blob_rect.enter().append("svg:rect")
+              .attr("id", function(d) { return "changeset-" + d; })
+              .classed("rendered-changeset", true)
+              .attr("width", 1)
+              .attr("height", 1)
+              .transition("inflate")
               .attr("width", function(d) { console.log(d); return view.blob_width;})
               .attr("height", view.blob_height)
-              .attr("id", function(d) { return "changeset-" + d; })
-              .classed("rendered-changeset", true);
+              .duration(500);
         // Update
         view._calculatePositionData(ws.blobs);
         blob_rect.transition()
