@@ -553,36 +553,38 @@ function(_yargs, d3, demos) {
     },
 
     reset: function(args) {
+      var unstage = false;
       while (args.length > 0) {
         var arg = args.shift();
-
-        switch (arg) {
-          case '--soft':
-            // no resetting of the index or working tree
-            this.doReset(args.join(' '));
-            args.length = 0;
-            break;
-          case '--mixed':
-            // reset just the index
-            this.doReset(args.join(' '));
-            workspace.removeAllBlobs(workspace.index);
-            args.length = 0;
-            break;
-          case '--hard':
-            this.doReset(args.join(' '));
-            // reset the index and the working tree
-            workspace.removeAllBlobs(workspace.curr_ws);
-            workspace.removeAllBlobs(workspace.index);
-            args.length = 0;
-            break;
-          default:
-            var remainingArgs = [arg].concat(args);
-            args.length = 0;
-            this.info('Assuming "--hard".');
-            this.doReset(remainingArgs.join(' '));
-            // reset the index and the working tree
-            workspace.removeAllBlobs(workspace.curr_ws);
-            workspace.removeAllBlobs(workspace.index);
+        if (unstage) {
+          workspace.moveBlobByName(workspace.index, workspace.curr_ws, arg);
+        } else {
+          switch (arg) {
+            case '--soft':
+              // no resetting of the index or working tree
+              this.doReset(args.join(' '));
+              args.length = 0;
+              break;
+            case '--mixed':
+              // reset just the index
+              this.doReset(args.join(' '));
+              workspace.removeAllBlobs(workspace.index);
+              args.length = 0;
+              break;
+            case '--hard':
+              this.doReset(args.join(' '));
+              // reset the index and the working tree
+              workspace.removeAllBlobs(workspace.curr_ws);
+              workspace.removeAllBlobs(workspace.index);
+              args.length = 0;
+              break;
+            case "HEAD":
+              // unstage the file (move from index to working tree)
+              unstage = true;
+              break;
+            default:
+              this.info("Invalid ref: " + arg);
+          }
         }
       }
     },

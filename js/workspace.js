@@ -284,10 +284,10 @@ define(['historyview', 'd3'], function(HistoryView) {
       	  .attr('width', "31%")
       	  .attr('height', "100%")
       	  .attr('x', 0)
-	        .attr('y', 0);
+	      .attr('y', 0);
       curr_ws.append('svg:text')
 	      .classed('workspace-label', true)
-          .text('Workspace')
+          .text('Workspace/Working Tree')
           .attr('x', labelX)
           .attr('y', labelY);
       curr_ws.append('svg:g').classed('blob-space', true).attr('id', 'curr_ws.blob-space');
@@ -302,7 +302,7 @@ define(['historyview', 'd3'], function(HistoryView) {
           .attr('y', 0);
       index.append('svg:text')
 	      .classed('workspace-label', true)
-          .text('Index')
+          .text('Index/Stage')
           .attr('x', labelX)
           .attr('y', labelY);
       index.append('svg:g').classed('blob-space', true).attr('id', 'index.blob-space');
