@@ -366,8 +366,9 @@ define(['historyview', 'd3'], function(HistoryView) {
               // stash is treated like a stack of changesets (group of blobs)
               dst.blobs.unshift(src.blobs);
             } else {
-              dst.blobs = src.blobs;
+              dst.blobs = dst.blobs.concat(src.blobs);
             }
+            // empty out the src blobs
             src.blobs = [];
             console.log("Moving all blobs");
         } else {
