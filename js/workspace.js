@@ -128,72 +128,6 @@ define(['historyview', 'd3'], function(HistoryView) {
       });
   };
 
-  // calculates the x1 point for commit pointer lines
-  px1 = function(commit, view, pp) {
-    pp = pp || 'parent';
-
-    var parent = view.getCommit(commit[pp]),
-      startCX = commit.cx,
-      diffX = startCX - parent.cx,
-      diffY = parent.cy - commit.cy,
-      length = Math.sqrt((diffX * diffX) + (diffY * diffY));
-
-    return startCX - (view.pointerMargin * (diffX / length));
-  };
-
-  // calculates the y1 point for commit pointer lines
-  py1 = function(commit, view, pp) {
-    pp = pp || 'parent';
-
-    var parent = view.getCommit(commit[pp]),
-      startCY = commit.cy,
-      diffX = commit.cx - parent.cx,
-      diffY = parent.cy - startCY,
-      length = Math.sqrt((diffX * diffX) + (diffY * diffY));
-
-    return startCY + (view.pointerMargin * (diffY / length));
-  };
-
-  fixPointerStartPosition = function(selection, view) {
-    selection.attr('x1', function(d) {
-      return px1(d, view);
-    }).attr('y1', function(d) {
-      return py1(d, view);
-    });
-  };
-
-  px2 = function(commit, view, pp) {
-    pp = pp || 'parent';
-
-    var parent = view.getCommit(commit[pp]),
-      endCX = parent.cx,
-      diffX = commit.cx - endCX,
-      diffY = parent.cy - commit.cy,
-      length = Math.sqrt((diffX * diffX) + (diffY * diffY));
-
-    return endCX + (view.pointerMargin * 1.2 * (diffX / length));
-  };
-
-  py2 = function(commit, view, pp) {
-    pp = pp || 'parent';
-
-    var parent = view.getCommit(commit[pp]),
-      endCY = parent.cy,
-      diffX = commit.cx - parent.cx,
-      diffY = endCY - commit.cy,
-      length = Math.sqrt((diffX * diffX) + (diffY * diffY));
-
-    return endCY - (view.pointerMargin * 1.2 * (diffY / length));
-  };
-
-  fixPointerEndPosition = function(selection, view) {
-    selection.attr('x2', function(d) {
-      return px2(d, view);
-    }).attr('y2', function(d) {
-      return py2(d, view);
-    });
-  };
-
   fixIdPosition = function(selection, view, delta) {
     selection.attr('x', function(d) {
       return d.x + view.blob_width / 2;
@@ -318,13 +252,8 @@ define(['historyview', 'd3'], function(HistoryView) {
       this.index = index
       this.index.name = "index"
       this.index.blobs = this.index.blobs || []
-      //this.arrowBox = svg.append('svg:g').classed('pointers', true);
-      //this.commitBox = svg.append('svg:g').classed('commits', true);
-      //this.tagBox = svg.append('svg:g').classed('tags', true);
 
       this.renderBlobs();
-
-      //this._setCurrentBranch(this.currentBranch);
     },
 
     destroy: function() {
@@ -470,16 +399,7 @@ define(['historyview', 'd3'], function(HistoryView) {
         // Update
         view._calculatePositionData(ws.blobs);
         blob_rect
-              //.attr("width", 1)
-              //.attr("height", 1)
-              //.transition("inflate")
-              //.attr("width", function(d) { console.log(d); return view.blob_width;})
-              //.attr("height", view.blob_height)
-              //.duration(500)
               .call(fixBlobPosition);
-        //blob_rect
-              //.attr("x", 50)
-              //.attr("y", function(d) { return 50 + ws.blobs.indexOf(d) * 100; });
         // Remove
         blob_rect.exit().remove();
         view._renderIdLabels(ws);
@@ -504,9 +424,6 @@ define(['historyview', 'd3'], function(HistoryView) {
         blob_rect.transition()
               .duration(500)
               .call(fixBlobPosition);
-        //blob_rect
-              //.attr("x", 50)
-              //.attr("y", function(d) { return 50 + ws.blobs.indexOf(d) * 100; });
         // Remove
         blob_rect.exit().remove();
         view._renderIdLabels(ws);
@@ -552,7 +469,6 @@ define(['historyview', 'd3'], function(HistoryView) {
       existingTexts.exit()
         .remove()
     },
-
   };
 
   return Workspace;
