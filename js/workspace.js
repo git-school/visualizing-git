@@ -1,122 +1,8 @@
 define(['historyview', 'd3'], function(HistoryView) {
   "use strict";
 
-  var REG_MARKER_END = 'url(#triangle)',
-    MERGE_MARKER_END = 'url(#brown-triangle)',
-    FADED_MARKER_END = 'url(#faded-triangle)',
-
-    preventOverlap,
-    applyBranchlessClass,
-    cx, cy, fixBlobPosition,
-    px1, py1, fixPointerStartPosition,
-    px2, py2, fixPointerEndPosition,
+    var fixBlobPosition,
     fixIdPosition, tagY, getUniqueSetItems;
-
-  preventOverlap = function preventOverlap(commit, view) {
-    var commitData = view.commitData,
-      baseLine = view.baseLine,
-      shift = view.commitRadius * 4.5,
-      overlapped = null;
-
-    for (var i = 0; i < commitData.length; i++) {
-      var c = commitData[i];
-      if (c.cx === commit.cx && c.cy === commit.cy && c !== commit) {
-        overlapped = c;
-        break;
-      }
-    }
-
-    if (overlapped) {
-      var oParent = view.getCommit(overlapped.parent),
-        parent = view.getCommit(commit.parent);
-
-      if (overlapped.cy < baseLine) {
-        overlapped = oParent.cy < parent.cy ? overlapped : commit;
-        overlapped.cy -= shift;
-      } else {
-        overlapped = oParent.cy > parent.cy ? overlapped : commit;
-        overlapped.cy += shift;
-      }
-
-      preventOverlap(overlapped, view);
-    }
-  };
-
-  applyBranchlessClass = function(selection) {
-    if (selection.empty()) {
-      return;
-    }
-
-    selection.classed('branchless', function(d) {
-      return d.branchless;
-    });
-
-    if (selection.classed('commit-pointer')) {
-      selection.attr('marker-end', function(d) {
-        return d.branchless ? FADED_MARKER_END : REG_MARKER_END;
-      });
-    } else if (selection.classed('merge-pointer')) {
-      selection.attr('marker-end', function(d) {
-        return d.branchless ? FADED_MARKER_END : MERGE_MARKER_END;
-      });
-    }
-  };
-
-  cx = function(commit, view) {
-    var parent = view.getCommit(commit.parent),
-      parentCX = parent.cx;
-
-    if (typeof commit.parent2 === 'string') {
-      var parent2 = view.getCommit(commit.parent2);
-
-      parentCX = parent.cx > parent2.cx ? parent.cx : parent2.cx;
-    }
-
-    return parentCX + (view.commitRadius * 4.5);
-  };
-
-  cy = function(commit, view) {
-    var parent = view.getCommit(commit.parent),
-      parentCY = parent.cy || cy(parent, view),
-      baseLine = view.baseLine,
-      shift = view.commitRadius * 4.5,
-      branches = [], // count the existing branches
-      branchIndex = 0;
-
-    for (var i = 0; i < view.commitData.length; i++) {
-      var d = view.commitData[i];
-
-      if (d.parent === commit.parent) {
-        branches.push(d.id);
-      }
-    }
-
-    branchIndex = branches.indexOf(commit.id);
-
-    if (commit.isNoFFBranch === true) {
-      branchIndex++;
-    }
-    if (commit.isNoFFCommit === true) {
-      branchIndex--;
-    }
-
-    if (parentCY === baseLine) {
-      var direction = 1;
-      for (var bi = 0; bi < branchIndex; bi++) {
-        direction *= -1;
-      }
-
-      shift *= Math.ceil(branchIndex / 2);
-
-      return parentCY + (shift * direction);
-    }
-
-    if (parentCY < baseLine) {
-      return parentCY - (shift * branchIndex);
-    } else if (parentCY > baseLine) {
-      return parentCY + (shift * branchIndex);
-    }
-  };
 
   fixBlobPosition = function(selection) {
     selection
@@ -269,7 +155,6 @@ define(['historyview', 'd3'], function(HistoryView) {
     },
 
     addNewBlob: function(ws) {
-      console.log("adding new blob to " + ws.name);
       if (ws.blobs === undefined || !ws.blobs) {
         ws.blobs = [];
       }
@@ -279,7 +164,6 @@ define(['historyview', 'd3'], function(HistoryView) {
                   'filename': 'file_' + this.filename_counter}
       this.filename_counter += 1;
       ws.blobs.push(blob);
-      console.log(ws.blobs);
     },
 
     addBlob: function(src, dst, moveAll=false) {
@@ -299,7 +183,6 @@ define(['historyview', 'd3'], function(HistoryView) {
             }
             // empty out the src blobs
             src.blobs = [];
-            console.log("Moving all blobs");
         } else {
           if (dst.blobs === undefined) {
             dst.blobs = [];
@@ -314,7 +197,6 @@ define(['historyview', 'd3'], function(HistoryView) {
           } else {
             dst.blobs.push(top_blob);
           }
-          console.log("Moving top blob");
         }
       }
       this.renderBlobs();
@@ -351,7 +233,6 @@ define(['historyview', 'd3'], function(HistoryView) {
         var blob = blobs[i];
         blob.x = 50;
         blob.y = 50 + i * 125;
-        //preventOverlap(commit, this);
       }
     },
 
@@ -379,11 +260,8 @@ define(['historyview', 'd3'], function(HistoryView) {
         curr_workspace = this.stash,
         workspaces = [this.curr_ws, this.index],
         changeset_workspaces = [this.stash];
-      console.log("rendering blobs");
 
       workspaces.forEach(function(ws) {
-        console.log(ws.name);
-        console.log(ws.blobs);
         // Bind the data
         var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
         // Enter
@@ -393,7 +271,7 @@ define(['historyview', 'd3'], function(HistoryView) {
               .attr("width", 1)
               .attr("height", 1)
               .transition("inflate")
-              .attr("width", function(d) { console.log(d); return view.blob_width;})
+              .attr("width", view.blob_width)
               .attr("height", view.blob_height)
               .duration(500);
         // Update
@@ -405,8 +283,6 @@ define(['historyview', 'd3'], function(HistoryView) {
         view._renderIdLabels(ws);
       });
       changeset_workspaces.forEach(function(ws) {
-        console.log(ws.name);
-        console.log(ws.blobs);
         // Bind the data
         var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
         // Enter
@@ -416,7 +292,7 @@ define(['historyview', 'd3'], function(HistoryView) {
               .attr("width", 1)
               .attr("height", 1)
               .transition("inflate")
-              .attr("width", function(d) { console.log(d); return view.blob_width;})
+              .attr("width", view.blob_width)
               .attr("height", view.blob_height)
               .duration(500);
         // Update

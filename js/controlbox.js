@@ -86,7 +86,6 @@ function(_yargs, d3, demos) {
     },
 
     changeMode: function (mode) {
-      console.log(mode)
       if (mode === 'local' && this.historyView) {
         this.mode = 'local'
       } else if (mode === 'remote' && this.originView) {
@@ -943,7 +942,6 @@ function(_yargs, d3, demos) {
 
     add: function(args) {
       // Create boxes to visualize working tree, index, stash
-      console.log("in add");
       var workspace = this.workspace;
       while (args.length > 0) {
         var arg = args.shift();
@@ -956,16 +954,12 @@ function(_yargs, d3, demos) {
             workspace.moveBlobByName(workspace.curr_ws, workspace.index, arg);
             break;
         }
-
       }
-
-      //workspace.addBlob(workspace.curr_ws, workspace.index, true);
-      return
+      return;
     },
 
     stash: function(args) {
       // Create boxes to visualize working tree, index, stash
-      console.log("in stash");
       var workspace = this.workspace;
       if (args && args[0] === "pop") {
         workspace.addBlob(workspace.stash, workspace.curr_ws);
@@ -973,15 +967,14 @@ function(_yargs, d3, demos) {
         if (args[1] != undefined) {
           workspace.removeBlob(workspace.stash, args[1]);
         } else {
-          console.log("Invalid stash to drop");
+          this.log("Invalid stash to drop");
         }
       } else if (args && args[0] === "clear") {
         workspace.removeAllBlobs(workspace.stash);
       } else {
         workspace.addBlob(workspace.curr_ws, workspace.stash, true);
       }
-
-      return
+      return;
     }
   };
 
