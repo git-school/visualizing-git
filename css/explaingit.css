@@ -91,7 +91,7 @@ span.cmd {
   right: 0;
   left: 250px;
   margin-left: 0;
-  height: 50%;
+  height: 49%;
 }
 
 #ExplainGitZen-Container .ws-container {
@@ -101,8 +101,8 @@ span.cmd {
   bottom: 0;
   right: 0;
   left: 250px;
-  margin-left: 0;
-  height: 50%;
+  margin-left: 5px;
+  height: 49%;
 }
 
 #ExplainGitZen-Container .svg-container.remote-container {
