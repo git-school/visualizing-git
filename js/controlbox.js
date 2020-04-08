@@ -963,6 +963,12 @@ function(_yargs, d3, demos) {
       var workspace = this.workspace;
       if (args && args[0] === "pop") {
         workspace.addBlob(workspace.stash, workspace.curr_ws);
+      } else if (args && args[0] === "apply") {
+        if (args[1] != undefined) {
+          workspace.moveBlobByName(workspace.stash, workspace.curr_ws, args[1], false);
+        } else {
+          this.log("Invalid stash to apply");
+        }
       } else if (args && args[0] === "drop") {
         if (args[1] != undefined) {
           workspace.removeBlob(workspace.stash, args[1]);

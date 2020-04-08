@@ -202,17 +202,23 @@ define(['historyview', 'd3'], function(HistoryView) {
       this.renderBlobs();
     },
 
-    moveBlobByName: function(src, dst, filename) {
+    moveBlobByName: function(src, dst, filename, remove_from_src=true) {
       // set dst to undefined to remove the blob
       var target_blob = src.blobs.filter(function(d) {
               return d.filename === filename;
       });
       if (target_blob && target_blob.length == 1) {
-        // remove from src
-        src.blobs.splice(src.blobs.indexOf(target_blob[0]), 1);
+        if (remove_from_src) {
+          src.blobs.splice(src.blobs.indexOf(target_blob[0]), 1);
+        }
         // add to dst
         if (dst) {
-          dst.blobs.push(target_blob[0]);
+          if (Array.isArray(target_blob[0])) {
+            // ensure there's no duplicates after a 'stash apply'
+            dst.blobs = Array.from(new Set(dst.blobs.concat(target_blob[0])));
+          } else {
+            dst.blobs.push(target_blob[0]);
+          }
         }
       }
       this.renderBlobs();
@@ -313,13 +319,17 @@ define(['historyview', 'd3'], function(HistoryView) {
           d.forEach( function(blob) {
             ret_str += blob.id + ',';
           });
-          return ret_str.substr(0, 16);
+          ret_str = ret_str.substr(0, ret_str.length - 1);
+          return ret_str.substr(0, 32);
         }
         return d.id + '..';
       }, 14);
       this._renderText(ws, 'message-label', function(d) {
         if (ws.name === "stash") {
-          return "stash@{" + ws.blobs.indexOf(d) + "}";
+          var filename = "stash@{" + ws.blobs.indexOf(d) + "}";
+          // save the stash name in the changeset object
+          d.filename = filename;
+          return filename;
         }
         return d.filename;
       }, 24);
