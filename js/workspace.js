@@ -263,21 +263,13 @@ define(['historyview', 'd3'], function(HistoryView) {
       }
     },
 
-    renderBlobs: function() {
-      var view = this,
-        existingBlobs,
-        newBlobs,
-        curr_workspace = this.stash,
-        workspaces = [this.curr_ws, this.index],
-        changeset_workspaces = [this.stash];
-
-      workspaces.forEach(function(ws) {
+    _renderWorkspace: function(view, ws, blob_type) {
         // Bind the data
         var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
         // Enter
         blob_rect.enter().append("svg:rect")
-              .attr("id", function(d) { return "blob-" + d.id; })
-              .classed("rendered-blob", true)
+              .attr("id", function(d) { return blob_type + "-" + d.id; })
+              .classed("rendered-" + blob_type, true)
               .attr("width", 1)
               .attr("height", 1)
               .transition("inflate")
@@ -291,28 +283,21 @@ define(['historyview', 'd3'], function(HistoryView) {
         // Remove
         blob_rect.exit().remove();
         view._renderIdLabels(ws);
+    },
+
+    renderBlobs: function() {
+      var view = this,
+        existingBlobs,
+        newBlobs,
+        curr_workspace = this.stash,
+        workspaces = [this.curr_ws, this.index],
+        changeset_workspaces = [this.stash];
+
+      workspaces.forEach(function(ws) {
+        view._renderWorkspace(view, ws, "blob");
       });
       changeset_workspaces.forEach(function(ws) {
-        // Bind the data
-        var blob_rect = ws.select("g.blob-space").selectAll("rect").data(ws.blobs);
-        // Enter
-        blob_rect.enter().append("svg:rect")
-              .attr("id", function(d) { return "changeset-" + d; })
-              .classed("rendered-changeset", true)
-              .attr("width", 1)
-              .attr("height", 1)
-              .transition("inflate")
-              .attr("width", view.blob_width)
-              .attr("height", view.blob_height)
-              .duration(500);
-        // Update
-        view._calculatePositionData(ws.blobs);
-        blob_rect.transition()
-              .duration(500)
-              .call(fixBlobPosition);
-        // Remove
-        blob_rect.exit().remove();
-        view._renderIdLabels(ws);
+        view._renderWorkspace(view, ws, "changeset");
       });
     },
 
