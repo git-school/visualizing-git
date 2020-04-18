@@ -961,20 +961,19 @@ function(_yargs, d3, demos) {
     stash: function(args) {
       // Create boxes to visualize working tree, index, stash
       var workspace = this.workspace;
+      var stash_id = "0";
       if (args && args[0] === "pop") {
         workspace.addBlob(workspace.stash, workspace.curr_ws);
       } else if (args && args[0] === "apply") {
         if (args[1] != undefined) {
-          workspace.moveBlobByName(workspace.stash, workspace.curr_ws, args[1], false);
-        } else {
-          this.log("Invalid stash to apply");
+          stash_id = args[1];
         }
+        workspace.moveBlobByName(workspace.stash, workspace.curr_ws, stash_id, false);
       } else if (args && args[0] === "drop") {
         if (args[1] != undefined) {
-          workspace.removeBlob(workspace.stash, args[1]);
-        } else {
-          this.log("Invalid stash to drop");
+          stash_id = args[1];
         }
+        workspace.removeBlob(workspace.stash, stash_id);
       } else if (args && args[0] === "clear") {
         workspace.removeAllBlobs(workspace.stash);
       } else {

@@ -172,9 +172,8 @@ define(['historyview', 'd3'], function(HistoryView) {
         this.addNewBlob(dst);
       } else {
         // Moving an existing blob from 'src' to 'dst'
-        if (src.blobs === undefined || src.blobs.length == 0) {
-          console.log("no blobs to move");
-        } else if (moveAll) {
+        if (src.blobs !== undefined && src.blobs.length > 0) {
+          if (moveAll) {
             if (dst.name === "stash") {
               // stash is treated like a stack of changesets (group of blobs)
               dst.blobs.unshift(src.blobs);
@@ -183,19 +182,20 @@ define(['historyview', 'd3'], function(HistoryView) {
             }
             // empty out the src blobs
             src.blobs = [];
-        } else {
-          if (dst.blobs === undefined) {
-            dst.blobs = [];
-          }
-          if (src.name == "stash") {
-            var top_blob = src.blobs.shift();
           } else {
-            var top_blob = src.blobs.pop();
-          }
-          if (Array.isArray(top_blob)) {
-            dst.blobs = dst.blobs.concat(top_blob);
-          } else {
-            dst.blobs.push(top_blob);
+            if (dst.blobs === undefined) {
+              dst.blobs = [];
+            }
+            if (src.name === "stash") {
+              var top_blob = src.blobs.shift();
+            } else {
+              var top_blob = src.blobs.pop();
+            }
+            if (Array.isArray(top_blob)) {
+              dst.blobs = dst.blobs.concat(top_blob);
+            } else {
+              dst.blobs.push(top_blob);
+            }
           }
         }
       }
@@ -205,7 +205,11 @@ define(['historyview', 'd3'], function(HistoryView) {
     moveBlobByName: function(src, dst, filename, remove_from_src=true) {
       // set dst to undefined to remove the blob
       var target_blob = src.blobs.filter(function(d) {
-              return d.filename === filename;
+              if (src.name === "stash") {
+                      return d.filename.split("{")[1].split("}")[0] === filename;
+              } else {
+                      return d.filename === filename;
+              }
       });
       if (target_blob && target_blob.length == 1) {
         if (remove_from_src) {
