@@ -20,6 +20,7 @@ function(_yargs, d3, demos) {
   function ControlBox(config) {
     this.historyView = config.historyView;
     this.originView = config.originView;
+    this.workspace = config.workspace;
     this.initialMessage = config.initialMessage || 'Enter git commands below.';
     this._commandHistory = [];
     this._currentCommand = -1;
@@ -85,7 +86,6 @@ function(_yargs, d3, demos) {
     },
 
     changeMode: function (mode) {
-      console.log(mode)
       if (mode === 'local' && this.historyView) {
         this.mode = 'local'
       } else if (mode === 'remote' && this.originView) {
@@ -231,6 +231,7 @@ function(_yargs, d3, demos) {
         this.info('pres() = Turn on presenter mode')
         this.info('undo = Undo the last git command')
         this.info('redo = Redo the last undone git command')
+        this.info('edit = Make a file edit')
         this.info('mode = Change mode (`local` or `remote`)')
         this.info('clear = Clear the history pane and reset the visualization')
         this.info()
@@ -250,6 +251,8 @@ function(_yargs, d3, demos) {
         this.info('`git rev_parse`')
         this.info('`git revert`')
         this.info('`git tag`')
+        this.info('`git add`')
+        this.info('`git stash`')
         return
       }
 
@@ -297,6 +300,12 @@ function(_yargs, d3, demos) {
           .classed('command-entry', true)
           .html(entry);
         this._scrollToBottom();
+        return
+      }
+
+      if (entry.toLowerCase() === 'edit') {
+        var workspace = this.workspace;
+        workspace.addBlob(null, workspace.curr_ws);
         return
       }
 
@@ -378,6 +387,7 @@ function(_yargs, d3, demos) {
           this.getRepoView().amendCommit(opts.m || this.getRepoView().getCommit('head').message)
         } else {
           this.getRepoView().commit(null, opts.m);
+          workspace.removeAllBlobs(workspace.index);
         }
       }, function(before, after) {
         var reflogMsg = 'commit: ' + msg
@@ -472,25 +482,33 @@ function(_yargs, d3, demos) {
     },
 
     checkout: function(args, opts) {
-      if (opts.b) {
-        if (opts._[0]) {
-          this.branch(null, null, opts.b + ' ' + opts._[0])
-        } else {
-          this.branch(null, null, opts.b)
+      if (args && args[0] === "--") {
+        args.shift();
+        while (args.length > 0) {
+          var arg = args.shift();
+          workspace.moveBlobByName(workspace.curr_ws, undefined, arg);
         }
+      } else {
+        if (opts.b) {
+          if (opts._[0]) {
+            this.branch(null, null, opts.b + ' ' + opts._[0])
+          } else {
+            this.branch(null, null, opts.b)
+          }
+        }
+
+        var name = opts.b || opts._[0]
+
+        this.transact(function() {
+          this.getRepoView().checkout(name);
+        }, function(before, after) {
+          this.getRepoView().addReflogEntry(
+            'HEAD', after.commit.id,
+            'checkout: moving from ' + before.ref +
+            ' to ' + name
+          )
+        })
       }
-
-      var name = opts.b || opts._[0]
-
-      this.transact(function() {
-        this.getRepoView().checkout(name);
-      }, function(before, after) {
-        this.getRepoView().addReflogEntry(
-          'HEAD', after.commit.id,
-          'checkout: moving from ' + before.ref +
-          ' to ' + name
-        )
-      })
     },
 
     tag: function(args) {
@@ -534,33 +552,38 @@ function(_yargs, d3, demos) {
     },
 
     reset: function(args) {
+      var unstage = false;
       while (args.length > 0) {
         var arg = args.shift();
-
-        switch (arg) {
-          case '--soft':
-            this.info(
-              'The "--soft" flag works in real git, but ' +
-              'I am unable to show you how it works in this demo. ' +
-              'So I am just going to show you what "--hard" looks like instead.'
-            );
-            break;
-          case '--mixed':
-            this.info(
-              'The "--mixed" flag works in real git, but ' +
-              'I am unable to show you how it works in this demo. ' +
-              'So I am just going to show you what "--hard" looks like instead.'
-            );
-            break;
-          case '--hard':
-            this.doReset(args.join(' '));
-            args.length = 0;
-            break;
-          default:
-            var remainingArgs = [arg].concat(args);
-            args.length = 0;
-            this.info('Assuming "--hard".');
-            this.doReset(remainingArgs.join(' '));
+        if (unstage) {
+          workspace.moveBlobByName(workspace.index, workspace.curr_ws, arg);
+        } else {
+          switch (arg) {
+            case '--soft':
+              // no resetting of the index or working tree
+              this.doReset(args.join(' '));
+              args.length = 0;
+              break;
+            case '--mixed':
+              // reset just the index
+              this.doReset(args.join(' '));
+              workspace.removeAllBlobs(workspace.index);
+              args.length = 0;
+              break;
+            case '--hard':
+              this.doReset(args.join(' '));
+              // reset the index and the working tree
+              workspace.removeAllBlobs(workspace.curr_ws);
+              workspace.removeAllBlobs(workspace.index);
+              args.length = 0;
+              break;
+            case "HEAD":
+              // unstage the file (move from index to working tree)
+              unstage = true;
+              break;
+            default:
+              this.info("Invalid ref: " + arg);
+          }
         }
       }
     },
@@ -915,6 +938,48 @@ function(_yargs, d3, demos) {
         this.info("Real git reflog supports the '" + subcommand +
                   "' subcommand but this tool only supports 'show' and 'exists'")
       }
+    },
+
+    add: function(args) {
+      // Create boxes to visualize working tree, index, stash
+      var workspace = this.workspace;
+      while (args.length > 0) {
+        var arg = args.shift();
+        switch (arg) {
+          case '-u':
+          case '.':
+            workspace.addBlob(workspace.curr_ws, workspace.index, true);
+            break;
+          default:
+            workspace.moveBlobByName(workspace.curr_ws, workspace.index, arg);
+            break;
+        }
+      }
+      return;
+    },
+
+    stash: function(args) {
+      // Create boxes to visualize working tree, index, stash
+      var workspace = this.workspace;
+      var stash_id = "0";
+      if (args && args[0] === "pop") {
+        workspace.addBlob(workspace.stash, workspace.curr_ws);
+      } else if (args && args[0] === "apply") {
+        if (args[1] != undefined) {
+          stash_id = args[1];
+        }
+        workspace.moveBlobByName(workspace.stash, workspace.curr_ws, stash_id, false);
+      } else if (args && args[0] === "drop") {
+        if (args[1] != undefined) {
+          stash_id = args[1];
+        }
+        workspace.removeBlob(workspace.stash, stash_id);
+      } else if (args && args[0] === "clear") {
+        workspace.removeAllBlobs(workspace.stash);
+      } else {
+        workspace.addBlob(workspace.curr_ws, workspace.stash, true);
+      }
+      return;
     }
   };
 

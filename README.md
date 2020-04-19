@@ -25,6 +25,7 @@ Type `help` in the command box to see a list of supported operations
 `pres()` = Turn on presenter mode<br>
 `undo` = Undo the last git command<br>
 `redo` = Redo the last undone git command<br>
+`edit` = Make a file edit<br>
 `mode` = Change mode (`local` or `remote`)<br>
 `clear` = Clear the history pane and reset the visualization
 
@@ -45,6 +46,8 @@ git reset
 git rev_parse
 git revert
 git tag
+git add
+git stash
 ```
 
 

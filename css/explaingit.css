@@ -88,10 +88,21 @@ span.cmd {
   border: 1px dotted #AAA;
   position: absolute;
   top: 0;
-  bottom: 0;
   right: 0;
   left: 250px;
   margin-left: 0;
+  height: 49%;
+}
+
+#ExplainGitZen-Container .ws-container {
+  display: inline-block;
+  border: 1px dotted #AAA;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 250px;
+  margin-left: 5px;
+  height: 49%;
 }
 
 #ExplainGitZen-Container .svg-container.remote-container {
@@ -283,6 +294,27 @@ text.message-label {
   font-family: Courier New;
   fill: #666;
   font-size: 10px;
+}
+
+g.stash > rect {
+  fill: #FFCC66;
+  stroke: #CC9900;
+  stroke-width: 2;
+}
+
+g.curr-ws > rect {
+  fill: #7FC9FF;
+  stroke: #0026FF;
+}
+
+g.index > rect {
+  fill: #CCC;
+  stroke: #888;
+}
+
+g.blob-space > rect {
+  fill: #8ce08c;
+  stroke: #339900;
 }
 
 g.branch-tag > rect {
