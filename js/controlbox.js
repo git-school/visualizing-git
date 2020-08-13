@@ -237,7 +237,7 @@ function(_yargs, d3, demos) {
         this.info('Available Git Commands:')
         this.info('`git branch`')
         this.info('`git checkout`')
-        this.info('`git cherry_pick`')
+        this.info('`git cherry-pick`')
         this.info('`git commit`')
         this.info('`git fetch`')
         this.info('`git log`')
