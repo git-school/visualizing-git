@@ -255,7 +255,7 @@ define(['d3'], function() {
     this.name = config.name || 'UnnamedHistoryView';
     this.commitData = commitData;
 
-    this.currentBranch = config.currentBranch || 'master';
+    this.currentBranch = config.currentBranch || 'main';
 
     this.width = config.width;
     this.height = config.height || 400;
