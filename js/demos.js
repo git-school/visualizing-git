@@ -5,7 +5,7 @@ define([], function () {
     key: 'free',
     message: 'Have fun!',
     commitData: [
-        {id: 'e137e9b', tags: ['master'], message: 'first commit'},
+        {id: 'e137e9b', tags: ['main'], message: 'first commit'},
     ]
   }
 
@@ -14,10 +14,10 @@ define([], function () {
     key: 'free-remote',
     message: 'Have fun!',
     commitData: [
-        {id: 'e137e9b', tags: ['master', 'origin/master'], message: 'first commit'},
+        {id: 'e137e9b', tags: ['main', 'origin/main'], message: 'first commit'},
     ],
     originData: [
-        {id: 'e137e9b', tags: ['master'], message: 'first commit'}
+        {id: 'e137e9b', tags: ['main'], message: 'first commit'}
     ]
   }
 
@@ -36,7 +36,7 @@ define([], function () {
       {
         "id": "84c98fe",
         "parent": "e137e9b",
-        "tags": [ "master", "origin/master" ],
+        "tags": [ "main", "origin/main" ],
       },
       {
         "id": "1c016b6",
@@ -54,7 +54,7 @@ define([], function () {
       {
         "id": "84c98fe",
         "parent": "e137e9b",
-        "tags": [ "master", "HEAD" ],
+        "tags": [ "main", "HEAD" ],
       },
       {
         "id": "1c016b6",
@@ -88,8 +88,8 @@ define([], function () {
         "id": "84c98fe",
         "parent": "e137e9b",
         "tags": [
-          "master",
-          "origin/master"
+          "main",
+          "origin/main"
         ],
         "cx": 140,
         "cy": 330,
@@ -138,7 +138,7 @@ define([], function () {
         "id": "84c98fe",
         "parent": "e137e9b",
         "tags": [
-          "master"
+          "main"
         ],
         "cx": 140,
         "cy": 360,
@@ -227,7 +227,7 @@ define([], function () {
         "parent2": "077415f",
         "id": "8686fb6",
         "tags": [
-          "master",
+          "main",
           "HEAD"
         ],
         "message": "Merge",
@@ -336,7 +336,7 @@ define([], function () {
         "parent2": "12e9bbb",
         "id": "5749661",
         "tags": [
-          "master"
+          "main"
         ],
         "message": "Merge",
         "parent": "e8ce346",
@@ -352,7 +352,7 @@ define([], function () {
     key: 'rebase',
     message: 'Try rebasing the `feature` branch',
     commitData: [
-        {id: 'e137e9b', tags: ['master'], message: 'first commit'}
+        {id: 'e137e9b', tags: ['main'], message: 'first commit'}
     ]
   }
 
