@@ -322,3 +322,20 @@ g.head-tag > text {
   font-weight: bold;
   text-transform: uppercase;
 }
+
+.reset-button{
+  position: absolute;
+  right: 25px;
+  bottom: 25px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  z-index: 100 ;
+  background-color: rgb(218, 0, 0);
+  color: white;
+  box-shadow: 0 0px 5px #555;
+  font-size: 14px;
+}
+.reset-button:active{
+  transform: translateY(2px);
+}

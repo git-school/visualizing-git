@@ -1,141 +1,153 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-115441830-1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-115441830-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
 
-  gtag('config', 'UA-115441830-1');
-</script>
+    gtag('config', 'UA-115441830-1');
+  </script>
 
-<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-<title>Visualizing Git</title>
-<script src="js/vendor/jquery.js"></script>
-<script src="js/vendor/jquery-ui.min.js"></script>
-<script data-main="js/main" src="js/vendor/require.min.js"></script>
-<link rel="stylesheet" href="css/normalize.css">
-<link rel="stylesheet" href="css/1140.css">
-<link rel="stylesheet" href="css/explaingit.css">
-<link rel="stylesheet" href="css/jquery-ui.min.css">
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <title>Visualizing Git</title>
+  <script src="js/vendor/jquery.js"></script>
+  <script src="js/vendor/jquery-ui.min.js"></script>
+  <script data-main="js/main" src="js/vendor/require.min.js"></script>
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/1140.css">
+  <link rel="stylesheet" href="css/explaingit.css">
+  <link rel="stylesheet" href="css/jquery-ui.min.css">
 </head>
+
 <body>
 
-<div id="ExplainGitZen-Container" style="display:none">
+  <div id="ExplainGitZen-Container" style="display:none">
     <div class="playground-container">
       <pre id='last-command' style='display: none;'></pre>
     </div>
-</div>
+  </div>
+  <button onclick='clearCache()' class="reset-button">Reset</button>
 
-<svg version="1.1" baseProfile="full"
-     xmlns="http://www.w3.org/2000/svg"
-     xmlns:xlink="http://www.w3.org/1999/xlink"
-     xmlns:ev="http://www.w3.org/2001/xml-events"
-     width="0" height="0">
+  <svg version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:ev="http://www.w3.org/2001/xml-events" width="0" height="0">
 
-    <marker id="triangle" refX="5" refY="5" markerUnits="strokeWidth" fill="rgba(100,100,100,0.8)"
-            markerWidth="4" markerHeight="3" orient="auto" viewBox="0 0 10 10">
-        <path d="M 0 0 L 10 5 L 0 10 z"/>
+    <marker id="triangle" refX="5" refY="5" markerUnits="strokeWidth" fill="rgba(100,100,100,0.8)" markerWidth="4"
+      markerHeight="3" orient="auto" viewBox="0 0 10 10">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
     </marker>
-    <marker id="faded-triangle" refX="5" refY="5" markerUnits="strokeWidth" fill="#DDD"
-            markerWidth="4" markerHeight="3" orient="auto" viewBox="0 0 10 10">
-        <path d="M 0 0 L 10 5 L 0 10 z"/>
+    <marker id="faded-triangle" refX="5" refY="5" markerUnits="strokeWidth" fill="#DDD" markerWidth="4" markerHeight="3"
+      orient="auto" viewBox="0 0 10 10">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
     </marker>
-    <marker id="brown-triangle" refX="5" refY="5" markerUnits="strokeWidth" fill="rgba(100,100,100,0.8)"
-            markerWidth="4" markerHeight="3" orient="auto" viewBox="0 0 10 10">
-        <path d="M 0 0 L 10 5 L 0 10 z"/>
+    <marker id="brown-triangle" refX="5" refY="5" markerUnits="strokeWidth" fill="rgba(100,100,100,0.8)" markerWidth="4"
+      markerHeight="3" orient="auto" viewBox="0 0 10 10">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
     </marker>
-</svg>
+  </svg>
 
-<script type="text/javascript">
-require(['explaingit', 'demos'], function (explainGit, demos) {
-    function ready(fn) {
-      if (document.readyState != 'loading'){
-        fn();
-      } else {
-        document.addEventListener('DOMContentLoaded', fn);
+  <script type="text/javascript">
+    require(['explaingit', 'demos'], function (explainGit, demos) {
+      function ready(fn) {
+        if (document.readyState != 'loading') {
+          fn();
+        } else {
+          document.addEventListener('DOMContentLoaded', fn);
+        }
       }
-    }
 
-    function clearSavedState () {
-      if (window.localStorage) {
-        window.localStorage.removeItem('git-viz-snapshot')
+      function clearSavedState() {
+        if (window.localStorage) {
+          window.localStorage.removeItem('git-viz-snapshot')
+        }
       }
-    }
 
-    function cleanupDom () {
-      $('.svg-container.remote-container').remove()
-    }
+      function cleanupDom() {
+        $('.svg-container.remote-container').remove()
+      }
 
-    function clean () {
-      clearSavedState()
-      cleanupDom()
-    }
+      function clean() {
+        clearSavedState()
+        cleanupDom()
+      }
 
-    function cleanHash (hash) {
-      return hash.replace(/^#/, '')
-    }
+      function cleanHash(hash) {
+        return hash.replace(/^#/, '')
+      }
 
-    function findDemo (demos, name) {
-      return demos.filter(function (d) {
-        return d.key === name
-      })[0]
-    }
+      function findDemo(demos, name) {
+        return demos.filter(function (d) {
+          return d.key === name
+        })[0]
+      }
 
-    function copyDemo (demo) {
-      // make a deep copy
-      return JSON.parse(JSON.stringify(demo))
-    }
+      function copyDemo(demo) {
+        // make a deep copy
+        return JSON.parse(JSON.stringify(demo))
+      }
 
-    var lastDemo = findDemo(demos, cleanHash(window.location.hash)) || demos[0]
+      var lastDemo = findDemo(demos, cleanHash(window.location.hash)) || demos[0]
 
-    ready(function () {
-      window.onhashchange = function () {
-        var demo = findDemo(demos, cleanHash(window.location.hash)) || lastDemo
-        if (demo) {
-          lastDemo = demo
-          document.getElementById('last-command').textContent = ""
+      ready(function () {
+        window.onhashchange = function () {
+          var demo = findDemo(demos, cleanHash(window.location.hash)) || lastDemo
+          if (demo) {
+            lastDemo = demo
+            document.getElementById('last-command').textContent = ""
+            clean()
+            open()
+          }
+        }
+
+        open()
+      })
+
+      function open() {
+        explainGit.reset();
+
+        var savedState = null
+        if (window.localStorage) {
+          savedState = JSON.parse(window.localStorage.getItem('git-viz-snapshot') || 'null')
+        }
+
+        var initial = Object.assign(copyDemo(lastDemo), {
+          name: 'Zen',
+          height: '100%',
+          initialMessage: lastDemo.message,
+          undoHistory: savedState,
+          hvSavedState: savedState && savedState.stack[savedState.pointer].hv,
+          ovSavedState: savedState && savedState.stack[savedState.pointer].ov
+        })
+
+        explainGit.open(initial);
+      }
+
+      window.resetVis = function () {
+        if (confirm('This will reset your visualization. Are you sure?')) {
           clean()
           open()
         }
       }
 
-      open()
-    })
+      window.pres = function () {
+        document.getElementById('last-command').style.display = 'block'
+      }
+    });
+    function clearCache() {
 
-    function open() {
-      explainGit.reset();
-
-      var savedState = null
       if (window.localStorage) {
-        savedState = JSON.parse(window.localStorage.getItem('git-viz-snapshot') || 'null')
-      }
+        const flag = confirm('are you sure you want to reset?')
+        if (flag) {
+          window.localStorage.removeItem('git-viz-snapshot')
+          location.reload()
+        }
 
-      var initial = Object.assign(copyDemo(lastDemo), {
-        name: 'Zen',
-        height: '100%',
-        initialMessage: lastDemo.message,
-        undoHistory: savedState,
-        hvSavedState: savedState && savedState.stack[savedState.pointer].hv,
-        ovSavedState: savedState && savedState.stack[savedState.pointer].ov
-      })
-
-      explainGit.open(initial);
-    }
-
-    window.resetVis = function () {
-      if (confirm('This will reset your visualization. Are you sure?')) {
-        clean()
-        open()
       }
     }
-
-    window.pres = function () {
-      document.getElementById('last-command').style.display = 'block'
-    }
-});
-</script>
+  </script>
 </body>
+
 </html>
