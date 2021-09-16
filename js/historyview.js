@@ -1228,6 +1228,16 @@ define(['d3'], function() {
       this.branch('[' + name + ']');
     },
 
+    deleteTag: function(name) {
+      this.branches = this.branches.filter(branch => branch !== `[${name.trim()}]`);
+
+      this.commitData.forEach(commit => {
+        commit.tags = commit.tags.filter(tag => tag !== `[${name.trim()}]`)
+      });
+
+      this.renderTags();
+    },
+
     deleteBranch: function(name) {
       var branchIndex,
         commit;

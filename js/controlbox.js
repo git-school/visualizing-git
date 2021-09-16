@@ -506,6 +506,12 @@ function(_yargs, d3, demos) {
 
       while (args.length > 0) {
         var arg = args.shift();
+        
+        if(arg.trim() === '-d' || arg.trim() === '--delete'){
+          var tagName = args.shift();
+          this.getRepoView().deleteTag(tagName);
+          return this;
+        }
 
         try {
           this.getRepoView().tag(arg);
