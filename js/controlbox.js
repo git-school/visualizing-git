@@ -305,7 +305,7 @@ function(_yargs, d3, demos) {
         return
       }
 
-      var split = entry.split(' ');
+      var split = entry.split(' ').filter(section => section.trim().length > 0);
 
       this.terminalOutput.append('div')
         .classed('command-entry', true)
