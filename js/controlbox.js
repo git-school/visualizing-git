@@ -372,7 +372,6 @@ function(_yargs, d3, demos) {
         boolean: ['amend'],
         string: ['m']
       })
-      var msg = ""
       this.transact(function() {
         if (opts.amend) {
           this.getRepoView().amendCommit(opts.m || this.getRepoView().getCommit('head').message)
@@ -380,7 +379,7 @@ function(_yargs, d3, demos) {
           this.getRepoView().commit(null, opts.m);
         }
       }, function(before, after) {
-        var reflogMsg = 'commit: ' + msg
+        var reflogMsg = 'commit: ' + (after.commit.message ?? '');
         this.getRepoView().addReflogEntry(
           'HEAD', after.commit.id, reflogMsg
         )
